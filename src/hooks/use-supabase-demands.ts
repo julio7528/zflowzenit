@@ -163,12 +163,10 @@ export function useSupabaseDemands() {
         }
       });
       
-      // Garantir que os valores estejam no range válido (1-10) antes de salvar
-      // Converter explicitamente para inteiros para evitar problemas de tipo
-      // IMPORTANTE: Testando com valores fixos para identificar a restrição do banco
-      const gravity = 5; // Valor fixo para teste
-      const urgency = 5; // Valor fixo para teste  
-      const tendency = 5; // Valor fixo para teste
+      // Garantir que os valores estejam no range válido (1-10) conforme esperado pela aplicação
+      const gravity = Math.max(1, Math.min(10, Number(newItem.gravity) || 5));
+      const urgency = Math.max(1, Math.min(10, Number(newItem.urgency) || 5));
+      const tendency = Math.max(1, Math.min(10, Number(newItem.tendency) || 5));
       
       const validatedItem = {
         ...newItem,
@@ -177,7 +175,7 @@ export function useSupabaseDemands() {
         tendency,
       };
       
-      console.log('🧪 TESTE: Usando valores fixos GUT = 5 para identificar restrição:', { 
+      console.log('✅ Valores GUT validados (range 1-10):', { 
         gravity: validatedItem.gravity, 
         urgency: validatedItem.urgency, 
         tendency: validatedItem.tendency,
