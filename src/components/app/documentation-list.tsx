@@ -1,6 +1,5 @@
 'use client';
 
-import { useMemo } from 'react';
 import { useSupabaseDemands } from '@/hooks/use-supabase-demands';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

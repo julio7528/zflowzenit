@@ -1,13 +1,13 @@
 'use client';
 
-import { useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/use-auth';
+import { supabase } from '@/lib/supabase';
 import type { BacklogItem, Category } from '@/lib/types';
+import { useCallback } from 'react';
 
-const ITEMS_STORAGE_KEY = 'flowzen-items';
-const SETTINGS_STORAGE_KEY = 'flowzen-settings';
-const CATEGORIES_STORAGE_KEY = 'flowzen-categories';
+const ITEMS_STORAGE_KEY = 'FlowZenit-items';
+const SETTINGS_STORAGE_KEY = 'FlowZenit-settings';
+const CATEGORIES_STORAGE_KEY = 'FlowZenit-categories';
 
 export function useDataMigration() {
   const { user } = useAuth();

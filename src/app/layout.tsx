@@ -1,11 +1,11 @@
-import type { Metadata } from 'next';
-import './globals.css';
-import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/hooks/use-auth';
+import { cn } from '@/lib/utils';
+import type { Metadata } from 'next';
+import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'FlowZen',
+  title: 'FlowZenit',
   description: 'Gestão Integrada GTD GUT PDCA MASP',
 };
 

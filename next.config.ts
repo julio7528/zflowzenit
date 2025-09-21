@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  // Remove a linha: output: 'standalone',
   images: {
     remotePatterns: [
       {

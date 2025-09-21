@@ -28,7 +28,7 @@ const statusTranslations: Record<KanbanStatus, string> = {
 };
 
 export function InProgressList() {
-  const { items, updateItem, deleteItem, categories, settings, setSettings, isLoaded } = useSupabaseDemands();
+  const { items, updateItem, isLoaded } = useSupabaseDemands();
   const [sortOption, setSortOption] = useState<SortKey>('score_desc');
   const [statusFilter, setStatusFilter] = useState<KanbanStatus | 'all'>('all');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);

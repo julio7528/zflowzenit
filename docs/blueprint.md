@@ -1,4 +1,4 @@
-# **App Name**: FlowZen
+# **App Name**: FlowZenit
 
 ## Core Features:
 

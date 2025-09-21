@@ -42,7 +42,7 @@ const KANBAN_COLUMNS: { title: string; status: KanbanStatus }[] = [
 ];
 
 export function KanbanBoard() {
-  const { items, updateItem, deleteItem, categories, isLoaded } = useSupabaseDemands();
+  const { items, updateItem, isLoaded } = useSupabaseDemands();
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showOnlyProjects, setShowOnlyProjects] = useState(false);

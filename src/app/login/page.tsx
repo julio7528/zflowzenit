@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { Logo } from '@/components/app/logo'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
-import { Logo } from '@/components/app/logo'
+import { useEffect, useState } from 'react'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -20,7 +20,7 @@ export default function LoginPage() {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (session) {
-        router.push('/')
+        router.push('/dashboard')
       }
     }
     checkUser()
@@ -44,7 +44,8 @@ export default function LoginPage() {
           password,
         })
         if (error) throw error
-        router.push('/')
+        // After successful login, redirect to dashboard
+        router.push('/dashboard')
       }
     } catch (error: any) {
       alert(error.message)
@@ -54,16 +55,16 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-teal-50 p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#F0F8FF] to-white p-4">
+      <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
             <Logo />
           </div>
-          <CardTitle className="text-2xl font-bold">
-            {isSignUp ? 'Criar Conta' : 'Entrar no FlowZen'}
+          <CardTitle className="text-2xl font-bold text-gray-900">
+            {isSignUp ? 'Criar Conta' : 'Entrar no FlowZenit'}
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-gray-600">
             {isSignUp 
               ? 'Crie sua conta para começar a organizar suas demandas'
               : 'Entre com suas credenciais para acessar o sistema'
@@ -94,7 +95,11 @@ export default function LoginPage() {
                 required
               />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button 
+              type="submit" 
+              className="w-full bg-[#7EC4CF] hover:bg-[#66A5AD]" 
+              disabled={loading}
+            >
               {loading ? 'Carregando...' : (isSignUp ? 'Criar Conta' : 'Entrar')}
             </Button>
           </form>
@@ -102,7 +107,7 @@ export default function LoginPage() {
             <Button
               variant="link"
               onClick={() => setIsSignUp(!isSignUp)}
-              className="text-sm"
+              className="text-sm text-[#66A5AD] hover:text-[#7EC4CF]"
             >
               {isSignUp 
                 ? 'Já tem uma conta? Faça login'
