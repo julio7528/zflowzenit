@@ -32,7 +32,7 @@ export default function BillingPage() {
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip="Backlog">
-                    <Link href="/">
+                    <Link href="/dashboard">
                       <LayoutDashboard />
                       <span>Backlog</span>
                     </Link>

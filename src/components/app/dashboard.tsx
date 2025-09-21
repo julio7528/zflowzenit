@@ -1,11 +1,12 @@
 'use client';
 
+
 import { useSupabaseDemands } from '@/hooks/use-supabase-demands';
+import { useState } from 'react';
+import { AdaptiveUrgencyCard } from './adaptive-urgency-card';
 import { BacklogItemList } from './demand-list';
 import { NewBacklogItemDialog } from './new-demand-dialog';
-import { AdaptiveUrgencyCard } from './adaptive-urgency-card';
 import { SettingsDialog } from './settings-dialog';
-import { useState } from 'react';
 
 type SortKey = 'score_desc' | 'score_asc' | 'deadline_asc' | 'deadline_desc';
 
