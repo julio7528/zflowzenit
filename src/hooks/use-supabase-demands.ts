@@ -65,7 +65,7 @@ export function useSupabaseDemands() {
   });
 
   // Converter dados locais para formato Supabase
-  const convertLocalToSupabase = (localItem: Omit<BacklogItem, 'id' | 'score' | 'createdAt'>): Omit<SupabaseBacklogItem, 'id' | 'created_at' | 'updated_at'> => ({
+  const convertLocalToSupabase = (localItem: Omit<BacklogItem, 'id' | 'score' | 'createdAt'>, calculatedScore?: number): Omit<SupabaseBacklogItem, 'id' | 'created_at' | 'updated_at'> => ({
     user_id: user!.id,
     activity: localItem.activity,
     details: localItem.details || null,
@@ -74,7 +74,7 @@ export function useSupabaseDemands() {
     gravity: localItem.gravity,
     urgency: localItem.urgency,
     tendency: localItem.tendency,
-    score: 0, // Será calculado
+    score: calculatedScore || 0, // Usar o score calculado se fornecido
     deadline: localItem.deadline ? localItem.deadline.toISOString() : null,
     start_date: localItem.startDate ? localItem.startDate.toISOString() : null,
     category_id: localItem.categoryId || null,
@@ -149,7 +149,9 @@ export function useSupabaseDemands() {
     try {
       console.log('🔄 Adicionando item:', newItem);
       
-      const supabaseItem = convertLocalToSupabase(newItem);
+      // Calcular o score antes de salvar
+      const calculatedScore = calculateScore(newItem as BacklogItem, settings);
+      const supabaseItem = convertLocalToSupabase(newItem, calculatedScore);
       console.log('📤 Dados para Supabase:', supabaseItem);
       
       const { data, error } = await supabase
@@ -175,7 +177,7 @@ export function useSupabaseDemands() {
         const convertedItem = convertSupabaseToLocal(data);
         const itemWithScore = {
           ...convertedItem,
-          score: calculateScore(convertedItem, settings),
+          score: calculatedScore, // Usar o score já calculado
         };
         setItems(prev => [...prev, itemWithScore]);
       }
@@ -208,6 +210,9 @@ export function useSupabaseDemands() {
     if (!user) return;
 
     try {
+      // Calcular o score antes de salvar
+      const calculatedScore = calculateScore(updatedItem, settings);
+      
       const supabaseUpdate = {
         activity: updatedItem.activity,
         details: updatedItem.details || null,
@@ -216,6 +221,7 @@ export function useSupabaseDemands() {
         gravity: updatedItem.gravity,
         urgency: updatedItem.urgency,
         tendency: updatedItem.tendency,
+        score: calculatedScore, // Salvar o score calculado no banco
         deadline: updatedItem.deadline ? updatedItem.deadline.toISOString() : null,
         start_date: updatedItem.startDate ? updatedItem.startDate.toISOString() : null,
         category_id: updatedItem.categoryId || null,
@@ -233,14 +239,14 @@ export function useSupabaseDemands() {
 
       const itemWithScore = {
         ...updatedItem,
-        score: calculateScore(updatedItem, settings),
+        score: calculatedScore,
       };
 
       setItems(prev => prev.map(item => 
         item.id === updatedItem.id ? itemWithScore : item
       ));
     } catch (error) {
-      console.error('Erro ao atualizar item:', error);
+      console.error('Erro ao atualizar item:', error?.message || error);
     }
   }, [user, calculateScore, settings]);
 
