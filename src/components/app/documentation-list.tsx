@@ -8,6 +8,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { PDCADialog } from './pdca-dialog';
 import type { BacklogItem } from '@/lib/types';
+import { useMemo } from 'react';
 
 export function DocumentationList() {
   const { items, addItem, updateItem, deleteItem, isLoaded } = useSupabaseDemands();
@@ -40,7 +41,7 @@ export function DocumentationList() {
           </p>
         </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {documentedItems.map((item) => {
+        {documentedItems.map((item: BacklogItem) => {
           return (
             <Card key={item.id}>
               <CardHeader>

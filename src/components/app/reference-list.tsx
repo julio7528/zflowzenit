@@ -10,7 +10,7 @@ import { SortSettingsDialog } from './sort-settings-dialog';
 type SortOrder = 'createdAt' | 'alphabetical';
 
 export function ReferenceList() {
-  const { items, addItem, updateItem, deleteItem, isLoaded } = useSupabaseDemands();
+  const { items, addItem, updateItem, deleteItem, categories, addCategory, deleteCategory, isLoaded } = useSupabaseDemands();
   const [convertingItem, setConvertingItem] = useState<BacklogItem | null>(null);
   const [sortBy, setSortBy] = useState<SortOrder>('createdAt');
 
