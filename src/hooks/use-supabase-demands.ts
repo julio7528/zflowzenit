@@ -24,9 +24,14 @@ export function useSupabaseDemands() {
   const calculateScore = useCallback(
     (item: BacklogItem, currentSettings: {k: number, b: number}): number => {
       const { gravity, urgency, tendency, deadline } = item;
-      if (item.category === 'reference' || (gravity === 0 && urgency === 0 && tendency === 0)) return 0;
+      if (item.category === 'reference') return 0;
 
-      const gutProduct = gravity * urgency * tendency;
+      // Garantir que os valores estejam no range válido (1-10)
+      const validGravity = Math.max(1, Math.min(10, gravity || 1));
+      const validUrgency = Math.max(1, Math.min(10, urgency || 1));
+      const validTendency = Math.max(1, Math.min(10, tendency || 1));
+
+      const gutProduct = validGravity * validUrgency * validTendency;
 
       if (!deadline) {
         return gutProduct * 0.01;
@@ -149,9 +154,17 @@ export function useSupabaseDemands() {
     try {
       console.log('🔄 Adicionando item:', newItem);
       
+      // Garantir que os valores estejam no range válido (1-10) antes de salvar
+      const validatedItem = {
+        ...newItem,
+        gravity: Math.max(1, Math.min(10, newItem.gravity || 1)),
+        urgency: Math.max(1, Math.min(10, newItem.urgency || 1)),
+        tendency: Math.max(1, Math.min(10, newItem.tendency || 1)),
+      };
+      
       // Calcular o score antes de salvar
-      const calculatedScore = calculateScore(newItem as BacklogItem, settings);
-      const supabaseItem = convertLocalToSupabase(newItem, calculatedScore);
+      const calculatedScore = calculateScore(validatedItem as BacklogItem, settings);
+      const supabaseItem = convertLocalToSupabase(validatedItem, calculatedScore);
       console.log('📤 Dados para Supabase:', supabaseItem);
       
       const { data, error } = await supabase
@@ -210,40 +223,48 @@ export function useSupabaseDemands() {
     if (!user) return;
 
     try {
+      // Garantir que os valores estejam no range válido (1-10) antes de salvar
+      const validatedItem = {
+        ...updatedItem,
+        gravity: Math.max(1, Math.min(10, updatedItem.gravity || 1)),
+        urgency: Math.max(1, Math.min(10, updatedItem.urgency || 1)),
+        tendency: Math.max(1, Math.min(10, updatedItem.tendency || 1)),
+      };
+
       // Calcular o score antes de salvar
-      const calculatedScore = calculateScore(updatedItem, settings);
+      const calculatedScore = calculateScore(validatedItem, settings);
       
       const supabaseUpdate = {
-        activity: updatedItem.activity,
-        details: updatedItem.details || null,
-        category: updatedItem.category,
-        status: updatedItem.status,
-        gravity: updatedItem.gravity,
-        urgency: updatedItem.urgency,
-        tendency: updatedItem.tendency,
+        activity: validatedItem.activity,
+        details: validatedItem.details || null,
+        category: validatedItem.category,
+        status: validatedItem.status,
+        gravity: validatedItem.gravity,
+        urgency: validatedItem.urgency,
+        tendency: validatedItem.tendency,
         score: calculatedScore, // Salvar o score calculado no banco
-        deadline: updatedItem.deadline ? updatedItem.deadline.toISOString() : null,
-        start_date: updatedItem.startDate ? updatedItem.startDate.toISOString() : null,
-        category_id: updatedItem.categoryId || null,
-        pdca_analysis: updatedItem.pdcaAnalysis || null,
+        deadline: validatedItem.deadline ? validatedItem.deadline.toISOString() : null,
+        start_date: validatedItem.startDate ? validatedItem.startDate.toISOString() : null,
+        category_id: validatedItem.categoryId || null,
+        pdca_analysis: validatedItem.pdcaAnalysis || null,
         updated_at: new Date().toISOString(),
       };
 
       const { error } = await supabase
         .from('backlog_items')
         .update(supabaseUpdate)
-        .eq('id', updatedItem.id)
+        .eq('id', validatedItem.id)
         .eq('user_id', user.id);
 
       if (error) throw error;
 
       const itemWithScore = {
-        ...updatedItem,
+        ...validatedItem,
         score: calculatedScore,
       };
 
       setItems(prev => prev.map(item => 
-        item.id === updatedItem.id ? itemWithScore : item
+        item.id === validatedItem.id ? itemWithScore : item
       ));
     } catch (error) {
       console.error('Erro ao atualizar item:', error?.message || error);
