@@ -14,12 +14,6 @@ import type {
 } from '@/lib/types';
 import { differenceInHours } from 'date-fns';
 
-const defaultCategories: Category[] = [
-    { id: '1', name: 'Trabalho', color: '#3b82f6' },
-    { id: '2', name: 'Pessoal', color: '#10b981' },
-    { id: '3', name: 'Estudo', color: '#f97316' },
-];
-
 export function useSupabaseDemands() {
   const { user } = useAuth();
   const [items, setItems] = useState<BacklogItem[]>([]);
@@ -112,30 +106,14 @@ export function useSupabaseDemands() {
           });
       }
 
-      // Carregar categorias
+      // Carregar categorias (sem criar categorias padrão)
       const { data: categoriesData } = await supabase
         .from('categories')
         .select('*')
         .eq('user_id', user.id);
 
-      if (categoriesData && categoriesData.length > 0) {
+      if (categoriesData) {
         setCategories(categoriesData);
-      } else {
-        // Criar categorias padrão
-        const categoriesToInsert = defaultCategories.map(cat => ({
-          user_id: user.id,
-          name: cat.name,
-          color: cat.color,
-        }));
-
-        const { data: newCategories } = await supabase
-          .from('categories')
-          .insert(categoriesToInsert)
-          .select();
-
-        if (newCategories) {
-          setCategories(newCategories);
-        }
       }
 
       // Carregar itens

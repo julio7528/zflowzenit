@@ -1,7 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-import type { BacklogItem } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -14,15 +12,17 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Edit, Calendar as CalendarIcon } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { Calendar } from '../ui/calendar';
+import type { BacklogItem } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Calendar as CalendarIcon, Edit } from 'lucide-react';
+import { useState } from 'react';
+import { Calendar } from '../ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { Separator } from '../ui/separator';
 import { Slider } from '../ui/slider';
 import { Textarea } from '../ui/textarea';
-import { Separator } from '../ui/separator';
 import { PDCADialog } from './pdca-dialog';
 
 type EditBacklogItemDialogProps = {
@@ -58,9 +58,9 @@ export function EditBacklogItemDialog({ item, onUpdateItem }: EditBacklogItemDia
         activity,
         details,
         category,
-        gravity: 0,
-        urgency: 0,
-        tendency: 0,
+        gravity: 1,
+        urgency: 1,
+        tendency: 1,
         deadline: null,
         status: 'backlog',
     });
@@ -157,6 +157,7 @@ export function EditBacklogItemDialog({ item, onUpdateItem }: EditBacklogItemDia
               value={[gravity]}
               onValueChange={(v) => setGravity(v[0])}
               max={10}
+              min={1}
               step={1}
             />
           </div>
@@ -167,6 +168,7 @@ export function EditBacklogItemDialog({ item, onUpdateItem }: EditBacklogItemDia
               value={[urgency]}
               onValueChange={(v) => setUrgency(v[0])}
               max={10}
+              min={1}
               step={1}
             />
           </div>
@@ -177,6 +179,7 @@ export function EditBacklogItemDialog({ item, onUpdateItem }: EditBacklogItemDia
               value={[tendency]}
               onValueChange={(v) => setTendency(v[0])}
               max={10}
+              min={1}
               step={1}
             />
           </div>

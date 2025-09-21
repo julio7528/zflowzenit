@@ -1,7 +1,5 @@
 'use client';
 
-import { useState, useLayoutEffect, useRef, useEffect } from 'react';
-import type { BacklogItem, Category } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -14,15 +12,15 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PlusCircle, Calendar as CalendarIcon, Trash2 } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { Calendar } from '../ui/calendar';
+import { useToast } from '@/hooks/use-toast';
+import type { BacklogItem, Category } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Slider } from '../ui/slider';
-import { Textarea } from '../ui/textarea';
-import { useToast } from '@/hooks/use-toast';
+import { Calendar as CalendarIcon, PlusCircle, Trash2 } from 'lucide-react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Calendar } from '../ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import {
   Select,
   SelectContent,
@@ -30,6 +28,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../ui/select';
+import { Slider } from '../ui/slider';
+import { Textarea } from '../ui/textarea';
 
 type NewBacklogItemDialogProps = {
   onAddItem: (item: Omit<BacklogItem, 'id' | 'score' | 'createdAt'>) => void;
@@ -39,7 +39,7 @@ type NewBacklogItemDialogProps = {
   defaultDetails?: string;
   defaultCategoryId?: string | null;
   categories: Category[];
-  onAddCategory: (category: Omit<Category, 'id'>) => Category;
+  onAddCategory: (category: Omit<Category, 'id'>) => Promise<Category | null>;
   onDeleteCategory: (id: string) => void;
 };
 
@@ -177,9 +177,9 @@ export function NewBacklogItemDialog({ onAddItem, open: controlledOpen, onOpenCh
             details,
             category: newCategory,
             status: status,
-            gravity: 0,
-            urgency: 0,
-            tendency: 0,
+            gravity: 1,
+            urgency: 1,
+            tendency: 1,
             deadline: null,
             startDate: null,
             categoryId: selectedCategoryId,
@@ -201,13 +201,15 @@ export function NewBacklogItemDialog({ onAddItem, open: controlledOpen, onOpenCh
     }
   };
   
-  const handleCreateCategory = () => {
+  const handleCreateCategory = async () => {
     if (newCategoryName.trim()) {
-        const newCategory = onAddCategory({ name: newCategoryName, color: newCategoryColor });
-        setSelectedCategoryId(newCategory.id);
-        setNewCategoryName('');
-        setNewCategoryColor(colorPalette[0]);
-        setIsCreatingCategory(false);
+        const newCategory = await onAddCategory({ name: newCategoryName, color: newCategoryColor });
+        if (newCategory) {
+            setSelectedCategoryId(newCategory.id);
+            setNewCategoryName('');
+            setNewCategoryColor(colorPalette[0]);
+            setIsCreatingCategory(false);
+        }
     }
   }
 
@@ -225,10 +227,10 @@ export function NewBacklogItemDialog({ onAddItem, open: controlledOpen, onOpenCh
     const footerClasses = "pt-4 flex flex-wrap gap-2 justify-end";
 
     switch (currentStep) {
-      // Step 1: Capture Inbox
+
       case 1:
         return (
-          <div ref={el => stepRefs.current[currentStep] = el} className={stepClasses}>
+          <div ref={(el) => { stepRefs.current[currentStep] = el; }} className={stepClasses}>
             <DialogHeader>
               <DialogTitle>Caixa de Entrada</DialogTitle>
               <DialogDescription>O que está em sua mente? Descreva o item do backlog.</DialogDescription>
@@ -317,7 +319,7 @@ export function NewBacklogItemDialog({ onAddItem, open: controlledOpen, onOpenCh
       // Step 2: Is it actionable?
       case 2:
         return (
-          <div ref={el => stepRefs.current[currentStep] = el} className={stepClasses}>
+          <div ref={(el) => { stepRefs.current[currentStep] = el; }} className={stepClasses}>
             <DialogHeader>
               <DialogTitle>Isso é possível de ser executado?</DialogTitle>
               <DialogDescription>Você pode tomar alguma ação a respeito disso?</DialogDescription>
@@ -333,7 +335,7 @@ export function NewBacklogItemDialog({ onAddItem, open: controlledOpen, onOpenCh
       // Step 2.1: Not actionable flow
       case 2.1:
         return (
-            <div ref={el => stepRefs.current[currentStep] = el} className={stepClasses}>
+            <div ref={(el) => { stepRefs.current[currentStep] = el; }} className={stepClasses}>
             <DialogHeader>
               <DialogTitle>Como você gostaria de classificar isso?</DialogTitle>
               <DialogDescription>Escolha como armazenar este item não acionável.</DialogDescription>
@@ -351,7 +353,7 @@ export function NewBacklogItemDialog({ onAddItem, open: controlledOpen, onOpenCh
       // Step 3: Multiple steps?
       case 3:
           return (
-            <div ref={el => stepRefs.current[currentStep] = el} className={stepClasses}>
+            <div ref={(el) => { stepRefs.current[currentStep] = el; }} className={stepClasses}>
               <DialogHeader>
                 <DialogTitle>Requer múltiplos passos?</DialogTitle>
                 <DialogDescription>Isso exigirá mais de uma ação para ser concluído?</DialogDescription>
@@ -369,7 +371,7 @@ export function NewBacklogItemDialog({ onAddItem, open: controlledOpen, onOpenCh
       // Step 4: Less than 2 minutes?
       case 4:
           return (
-            <div ref={el => stepRefs.current[currentStep] = el} className={stepClasses}>
+            <div ref={(el) => { stepRefs.current[currentStep] = el; }} className={stepClasses}>
                 <DialogHeader>
                   <DialogTitle>Pode ser feito em menos de 2 minutos?</DialogTitle>
                   <DialogDescription>Você conseguiria concluir esta tarefa rapidamente?</DialogDescription>
@@ -385,7 +387,7 @@ export function NewBacklogItemDialog({ onAddItem, open: controlledOpen, onOpenCh
       // Step 5: Delegate, Schedule or Defer?
       case 5:
           return (
-            <div ref={el => stepRefs.current[currentStep] = el} className={stepClasses}>
+            <div ref={(el) => { stepRefs.current[currentStep] = el; }} className={stepClasses}>
                 <DialogHeader>
                   <DialogTitle>Qual é a próxima ação?</DialogTitle>
                   <DialogDescription>Como este item será tratado?</DialogDescription>
@@ -406,7 +408,7 @@ export function NewBacklogItemDialog({ onAddItem, open: controlledOpen, onOpenCh
       // Step 5.1: Delegate
       case 5.1:
         return (
-            <div ref={el => stepRefs.current[currentStep] = el} className={stepClasses}>
+            <div ref={(el) => { stepRefs.current[currentStep] = el; }} className={stepClasses}>
             <DialogHeader>
               <DialogTitle>Delegar Tarefa</DialogTitle>
               <DialogDescription>Para quem você gostaria de delegar esta tarefa?</DialogDescription>
@@ -435,7 +437,7 @@ export function NewBacklogItemDialog({ onAddItem, open: controlledOpen, onOpenCh
       // Step 5.2: Schedule
       case 5.2:
         return (
-            <div ref={el => stepRefs.current[currentStep] = el} className={stepClasses}>
+            <div ref={(el) => { stepRefs.current[currentStep] = el; }} className={stepClasses}>
             <DialogHeader>
               <DialogTitle>Agendar Tarefa</DialogTitle>
               <DialogDescription>Defina um prazo para a entrega deste item.</DialogDescription>
@@ -465,107 +467,87 @@ export function NewBacklogItemDialog({ onAddItem, open: controlledOpen, onOpenCh
                   />
                 </PopoverContent>
               </Popover>
-               <Input 
-                type="time" 
-                value={deadline ? format(deadline, 'HH:mm') : ''}
-                onChange={(e) => {
-                  const [hours, minutes] = e.target.value.split(':').map(Number);
-                  setDeadline(prev => {
-                    const newDate = prev ? new Date(prev) : new Date();
-                    newDate.setHours(hours, minutes);
-                    return newDate;
-                  });
-                }}
-              />
+              <Label>Data de Início (Opcional)</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "justify-start text-left font-normal",
+                      !startDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {startDate ? format(startDate, 'PPP', { locale: ptBR }) : <span>Escolha uma data</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={startDate || undefined}
+                    onSelect={(date) => setStartDate(date || null)}
+                    initialFocus
+                    locale={ptBR}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
             <DialogFooter className={footerClasses}>
               <Button variant="outline" className="mr-auto" onClick={() => navigateToStep(5)}>Voltar</Button>
-              <Button onClick={() => handleCategorize('task')} disabled={!deadline}>Confirmar Agendamento</Button>
+              <Button onClick={() => handleCategorize('task')}>Confirmar Agendamento</Button>
             </DialogFooter>
           </div>
         );
 
-      // Step 6: Adjust GUT
+      // Step 6: GUT Analysis
       case 6:
         return (
-            <div ref={el => stepRefs.current[currentStep] = el} className={stepClasses}>
-             <DialogHeader>
-              <DialogTitle>Ajustar Prioridade (GUT)</DialogTitle>
-              <DialogDescription>Defina a gravidade, urgência e tendência para este item.</DialogDescription>
+          <div ref={(el) => { stepRefs.current[currentStep] = el; }} className={stepClasses}>
+            <DialogHeader>
+              <DialogTitle>Análise GUT</DialogTitle>
+              <DialogDescription>Avalie a Gravidade, Urgência e Tendência deste item.</DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-                <div className="space-y-2">
-                    <Label htmlFor="gravity">Gravidade: {gravity}</Label>
-                    <Slider id="gravity" value={[gravity]} onValueChange={(v) => setGravity(v[0])} max={10} step={1} />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="urgency">Urgência: {urgency}</Label>
-                    <Slider id="urgency" value={[urgency]} onValueChange={(v) => setUrgency(v[0])} max={10} step={1} />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="tendency">Tendência: {tendency}</Label>
-                    <Slider id="tendency" value={[tendency]} onValueChange={(v) => setTendency(v[0])} max={10} step={1} />
-                </div>
-                {itemCategory === 'project' && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                       <Label>Data Inicial do Projeto</Label>
-                       <Popover>
-                         <PopoverTrigger asChild>
-                           <Button
-                             variant={"outline"}
-                             className={cn(
-                               "w-full justify-start text-left font-normal",
-                               !startDate && "text-muted-foreground"
-                             )}
-                           >
-                             <CalendarIcon className="mr-2 h-4 w-4" />
-                             {startDate ? format(startDate, 'dd/MM/yyyy') : <span>Escolha uma data</span>}
-                           </Button>
-                         </PopoverTrigger>
-                         <PopoverContent className="w-auto p-0">
-                           <Calendar
-                             mode="single"
-                             selected={startDate || undefined}
-                             onSelect={(date) => setStartDate(date || null)}
-                             initialFocus
-                             locale={ptBR}
-                           />
-                         </PopoverContent>
-                       </Popover>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Data Final do Projeto</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "w-full justify-start text-left font-normal",
-                              !deadline && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {deadline ? format(deadline, 'dd/MM/yyyy') : <span>Escolha uma data</span>}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                          <Calendar
-                            mode="single"
-                            selected={deadline || undefined}
-                            onSelect={(date) => setDeadline(date || null)}
-                            initialFocus
-                            locale={ptBR}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                  </div>
-                )}
+            <div className="grid gap-6 py-4">
+              <div className="space-y-2">
+                <Label>Gravidade: {gravity}</Label>
+                <Slider
+                  value={[gravity]}
+                  onValueChange={(value) => setGravity(value[0])}
+                  max={10}
+                  min={1}
+                  step={1}
+                  className="w-full"
+                />
+                <p className="text-xs text-muted-foreground">Qual o impacto se não for resolvido?</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Urgência: {urgency}</Label>
+                <Slider
+                  value={[urgency]}
+                  onValueChange={(value) => setUrgency(value[0])}
+                  max={10}
+                  min={1}
+                  step={1}
+                  className="w-full"
+                />
+                <p className="text-xs text-muted-foreground">Quão rápido precisa ser resolvido?</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Tendência: {tendency}</Label>
+                <Slider
+                  value={[tendency]}
+                  onValueChange={(value) => setTendency(value[0])}
+                  max={10}
+                  min={1}
+                  step={1}
+                  className="w-full"
+                />
+                <p className="text-xs text-muted-foreground">Vai piorar com o tempo?</p>
+              </div>
             </div>
             <DialogFooter className={footerClasses}>
-                <Button variant="outline" className="mr-auto" onClick={() => navigateToStep(itemCategory === 'project' ? 3 : 5)}>Voltar</Button>
-                <Button onClick={handleFinalAdd}>Criar Item de Backlog</Button>
+              <Button variant="outline" className="mr-auto" onClick={() => navigateToStep(itemCategory === 'project' ? 3 : 5)}>Voltar</Button>
+              <Button onClick={handleFinalAdd}>Finalizar</Button>
             </DialogFooter>
           </div>
         );
@@ -574,37 +556,27 @@ export function NewBacklogItemDialog({ onAddItem, open: controlledOpen, onOpenCh
         return null;
     }
   };
-  
-  const DialogTriggerButton = (
-    <DialogTrigger asChild>
-      <Button>
-        <PlusCircle />
-        Novo Backlog
-      </Button>
-    </DialogTrigger>
-  );
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      {!isControlled && DialogTriggerButton}
-      <DialogContent 
-        className="sm:max-w-md p-0 overflow-hidden"
-        onInteractOutside={(e) => e.preventDefault()} 
-        onEscapeKeyDown={(e) => e.preventDefault()}
+      {!isControlled && (
+        <DialogTrigger asChild>
+          <Button>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Novo Item
+          </Button>
+        </DialogTrigger>
+      )}
+      <DialogContent
+        className="sm:max-w-[600px] overflow-hidden"
+        style={{ height: contentHeight === 'auto' ? 'auto' : `${contentHeight + 120}px` }}
       >
-        <div 
-          className="relative transition-[height] duration-300 ease-in-out"
-          style={{ height: contentHeight }}
-        >
-            {renderStepContent(1)}
-            {renderStepContent(2)}
-            {renderStepContent(2.1)}
-            {renderStepContent(3)}
-            {renderStepContent(4)}
-            {renderStepContent(5)}
-            {renderStepContent(5.1)}
-            {renderStepContent(5.2)}
-            {renderStepContent(6)}
+        <div className="relative">
+          {[1, 2, 2.1, 3, 4, 5, 5.1, 5.2, 6].map(stepNumber => (
+            <div key={stepNumber}>
+              {renderStepContent(stepNumber)}
+            </div>
+          ))}
         </div>
       </DialogContent>
     </Dialog>

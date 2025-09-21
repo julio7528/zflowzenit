@@ -110,9 +110,9 @@ export function NewBacklogItemDialog({ onAddItem }: NewBacklogItemDialogProps) {
             description: customDescription || description,
             category: newCategory,
             status: 'backlog',
-            gravity: 0,
-            urgency: 0,
-            tendency: 0,
+            gravity: 1,
+            urgency: 1,
+            tendency: 1,
             deadline: null,
           });
           handleOpenChange(false);
