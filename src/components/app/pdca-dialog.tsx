@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useSupabaseDemands } from '@/hooks/use-supabase-demands';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { BacklogItem, PDCAAnalysis, SmartGoal, ActionPlan5W2H } from '@/lib/types';
@@ -32,7 +33,6 @@ import {
 } from "@/components/ui/accordion"
 import { Alert, AlertTitle, AlertDescription } from '../ui/alert';
 import { NewBacklogItemDialog } from './new-backlog-item-dialog';
-import { useBacklog } from '@/hooks/use-demands';
 import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { cn } from '@/lib/utils';
@@ -70,7 +70,7 @@ type ActionPlanStep = {
 
 export function PDCADialog({ item, children }: PDCADialogProps) {
   const router = useRouter();
-  const { addItem, categories, addCategory, deleteCategory, updateItemPdca } = useBacklog();
+  const { addItem, categories, addCategory, deleteCategory, updateItemPdca } = useSupabaseDemands();
   const [pdcaData, setPdcaData] = useState<PDCAAnalysis>(item.pdcaAnalysis ? { ...initialPdcaState, ...item.pdcaAnalysis } : initialPdcaState);
   const { toast } = useToast();
 

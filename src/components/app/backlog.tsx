@@ -1,6 +1,6 @@
 'use client';
 
-import { useBacklog } from '@/hooks/use-demands';
+import { useSupabaseDemands } from '@/hooks/use-supabase-demands';
 import { BacklogItemList } from './backlog-item-list';
 import { NewBacklogItemDialog } from '@/components/app/new-backlog-item-dialog';
 import { SettingsDialog } from './settings-dialog';
@@ -19,7 +19,18 @@ import { FilterX } from 'lucide-react';
 type SortKey = 'score_desc' | 'score_asc' | 'deadline_asc' | 'deadline_desc';
 
 export function Backlog() {
-  const { items, addItem, updateItem, deleteItem, settings, setSettings, categories, addCategory, deleteCategory } = useBacklog();
+  const {
+    items,
+    addItem,
+    updateItem,
+    deleteItem,
+    settings,
+    setSettings,
+    categories,
+    addCategory,
+    deleteCategory,
+    isLoaded,
+  } = useSupabaseDemands();
   const [sortOption, setSortOption] = useState<SortKey>('score_desc');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
 

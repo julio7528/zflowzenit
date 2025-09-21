@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { useBacklog } from '@/hooks/use-demands';
+import { useMemo } from 'react';
+import { useSupabaseDemands } from '@/hooks/use-supabase-demands';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FileText, Rocket } from 'lucide-react';
@@ -11,7 +11,7 @@ import { PDCADialog } from './pdca-dialog';
 import type { BacklogItem } from '@/lib/types';
 
 export function DocumentationList() {
-  const { items } = useBacklog();
+  const { items, addItem, updateItem, deleteItem, isLoaded } = useSupabaseDemands();
 
   const documentedItems = useMemo(() => {
     return items

@@ -1,7 +1,7 @@
 'use client';
 
+import { useSupabaseDemands } from '@/hooks/use-supabase-demands';
 import { useState, useMemo } from 'react';
-import { useBacklog } from '@/hooks/use-demands';
 import type { BacklogItem } from '@/lib/types';
 import { BacklogItemList } from './backlog-item-list';
 import { NewBacklogItemDialog } from '@/components/app/new-backlog-item-dialog';
@@ -19,7 +19,16 @@ import { FilterX } from 'lucide-react';
 type SortOrder = 'createdAt' | 'alphabetical';
 
 export function DemandsList() {
-  const { items, addItem, deleteItem, updateItem, categories, addCategory, deleteCategory } = useBacklog();
+  const {
+    items,
+    addItem,
+    updateItem,
+    deleteItem,
+    categories,
+    addCategory,
+    deleteCategory,
+    isLoaded,
+  } = useSupabaseDemands();
   const [convertingItem, setConvertingItem] = useState<BacklogItem | null>(null);
   const [sortBy, setSortBy] = useState<SortOrder>('createdAt');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);

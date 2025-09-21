@@ -8,6 +8,7 @@ export interface Category {
   id: string;
   name: string;
   color: string;
+  user_id?: string; // Adicionado para Supabase
 }
 
 export type SmartGoal = {
@@ -92,4 +93,34 @@ export interface BacklogItem {
   createdAt: Date;
   categoryId?: string | null;
   pdcaAnalysis?: Partial<PDCAAnalysis>;
+  user_id?: string; // Adicionado para Supabase
+}
+
+// Tipos específicos para Supabase
+export interface SupabaseBacklogItem {
+  id: string;
+  user_id: string;
+  activity: string;
+  details: string | null;
+  category: string;
+  status: string;
+  gravity: number;
+  urgency: number;
+  tendency: number;
+  score: number;
+  deadline: string | null;
+  start_date: string | null;
+  category_id: string | null;
+  pdca_analysis: any | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserSettings {
+  id: string;
+  user_id: string;
+  k_factor: number;
+  b_factor: number;
+  created_at: string;
+  updated_at: string;
 }

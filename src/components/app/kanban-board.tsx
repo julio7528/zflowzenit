@@ -1,12 +1,5 @@
 'use client';
 
-import { useBacklog } from '@/hooks/use-demands';
-import type { BacklogItem, KanbanStatus, Category } from '@/lib/types';
-import { Card, CardContent } from '../ui/card';
-import { isPast, startOfDay } from 'date-fns';
-import { cn } from '@/lib/utils';
-import { Trash2, Rocket, Calendar as CalendarIcon, FilterX, Briefcase } from 'lucide-react';
-import { Button } from '../ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,10 +11,17 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { DragEvent, useState, useMemo } from 'react';
+import { useSupabaseDemands } from '@/hooks/use-supabase-demands';
+import type { BacklogItem, Category, KanbanStatus } from '@/lib/types';
+import { cn } from '@/lib/utils';
+import { isPast, startOfDay } from 'date-fns';
+import { Briefcase, Calendar as CalendarIcon, FilterX, Rocket, Trash2 } from 'lucide-react';
+import { DragEvent, useMemo, useState } from 'react';
 import { Badge } from '../ui/badge';
-import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
+import { Button } from '../ui/button';
 import { Calendar } from '../ui/calendar';
+import { Card, CardContent } from '../ui/card';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import {
   Select,
   SelectContent,
@@ -42,7 +42,7 @@ const KANBAN_COLUMNS: { title: string; status: KanbanStatus }[] = [
 ];
 
 export function KanbanBoard() {
-  const { items, updateItem, deleteItem, categories } = useBacklog();
+  const { items, updateItem, deleteItem, categories, isLoaded } = useSupabaseDemands();
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showOnlyProjects, setShowOnlyProjects] = useState(false);
@@ -112,7 +112,7 @@ export function KanbanBoard() {
       <div className="flex-shrink-0 mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-2xl font-bold font-headline">Kamban-Geral</h1>
+              <h1 className="text-2xl font-bold font-headline">Kanban</h1>
               <p className="text-muted-foreground">
                 Visualize e gerencie o fluxo de trabalho dos seus itens.
               </p>

@@ -1,13 +1,13 @@
 'use client';
 
-import { useBacklog } from '@/hooks/use-demands';
+import { useSupabaseDemands } from '@/hooks/use-supabase-demands';
 import { BacklogItemList } from './demand-list';
 import { NewBacklogItemDialog } from './new-demand-dialog';
 import { AdaptiveUrgencyCard } from './adaptive-urgency-card';
 import { SettingsDialog } from './settings-dialog';
 
-export function Backlog() {
-  const { items, addItem, updateItem, settings, setSettings } = useBacklog();
+export function Dashboard() {
+  const { items, isLoaded } = useSupabaseDemands();
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

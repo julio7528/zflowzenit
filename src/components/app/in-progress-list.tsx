@@ -1,6 +1,6 @@
 'use client';
 
-import { useBacklog } from '@/hooks/use-demands';
+import { useSupabaseDemands } from '@/hooks/use-supabase-demands';
 import { BacklogItemList } from './backlog-item-list';
 import type { BacklogItem, KanbanStatus } from '@/lib/types';
 import { useState, useMemo, useCallback } from 'react';
@@ -28,7 +28,7 @@ const statusTranslations: Record<KanbanStatus, string> = {
 };
 
 export function InProgressList() {
-  const { items, updateItem, deleteItem, settings, setSettings, categories } = useBacklog();
+  const { items, updateItem, deleteItem, categories, settings, setSettings, isLoaded } = useSupabaseDemands();
   const [sortOption, setSortOption] = useState<SortKey>('score_desc');
   const [statusFilter, setStatusFilter] = useState<KanbanStatus | 'all'>('all');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
