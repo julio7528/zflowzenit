@@ -1,18 +1,17 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/use-auth';
-import type { 
-  BacklogItem, 
-  Category, 
-  PDCAAnalysis, 
-  SupabaseBacklogItem, 
-  UserSettings,
+import { supabase } from '@/lib/supabase';
+import type {
+  BacklogItem,
   BacklogItemCategoryType,
-  KanbanStatus
+  Category,
+  KanbanStatus,
+  PDCAAnalysis,
+  SupabaseBacklogItem
 } from '@/lib/types';
 import { differenceInHours } from 'date-fns';
+import { useCallback, useEffect, useState } from 'react';
 
 export function useSupabaseDemands() {
   const { user } = useAuth();
@@ -153,19 +152,55 @@ export function useSupabaseDemands() {
 
     try {
       console.log('🔄 Adicionando item:', newItem);
+      console.log('🔍 Valores GUT recebidos:', { 
+        gravity: newItem.gravity, 
+        urgency: newItem.urgency, 
+        tendency: newItem.tendency,
+        types: {
+          gravity: typeof newItem.gravity,
+          urgency: typeof newItem.urgency,
+          tendency: typeof newItem.tendency
+        }
+      });
       
       // Garantir que os valores estejam no range válido (1-10) antes de salvar
+      // Converter explicitamente para inteiros para evitar problemas de tipo
+      // IMPORTANTE: Testando com valores fixos para identificar a restrição do banco
+      const gravity = 5; // Valor fixo para teste
+      const urgency = 5; // Valor fixo para teste  
+      const tendency = 5; // Valor fixo para teste
+      
       const validatedItem = {
         ...newItem,
-        gravity: Math.max(1, Math.min(10, newItem.gravity || 1)),
-        urgency: Math.max(1, Math.min(10, newItem.urgency || 1)),
-        tendency: Math.max(1, Math.min(10, newItem.tendency || 1)),
+        gravity,
+        urgency,
+        tendency,
       };
+      
+      console.log('🧪 TESTE: Usando valores fixos GUT = 5 para identificar restrição:', { 
+        gravity: validatedItem.gravity, 
+        urgency: validatedItem.urgency, 
+        tendency: validatedItem.tendency,
+        types: {
+          gravity: typeof validatedItem.gravity,
+          urgency: typeof validatedItem.urgency,
+          tendency: typeof validatedItem.tendency
+        }
+      });
       
       // Calcular o score antes de salvar
       const calculatedScore = calculateScore(validatedItem as BacklogItem, settings);
       const supabaseItem = convertLocalToSupabase(validatedItem, calculatedScore);
-      console.log('📤 Dados para Supabase:', supabaseItem);
+      
+      console.log('📤 Dados finais para Supabase:', {
+        ...supabaseItem,
+        gravity_type: typeof supabaseItem.gravity,
+        urgency_type: typeof supabaseItem.urgency,
+        tendency_type: typeof supabaseItem.tendency,
+        gravity_value: supabaseItem.gravity,
+        urgency_value: supabaseItem.urgency,
+        tendency_value: supabaseItem.tendency
+      });
       
       const { data, error } = await supabase
         .from('backlog_items')
@@ -267,7 +302,7 @@ export function useSupabaseDemands() {
         item.id === validatedItem.id ? itemWithScore : item
       ));
     } catch (error) {
-      console.error('Erro ao atualizar item:', error?.message || error);
+      console.error('Error updating item:', error || error);
     }
   }, [user, calculateScore, settings]);
 

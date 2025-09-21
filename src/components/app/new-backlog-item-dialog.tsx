@@ -140,6 +140,17 @@ export function NewBacklogItemDialog({ onAddItem, open: controlledOpen, onOpenCh
       finalActivity = `[Delegado para: ${delegateName}] ${finalActivity}`;
     }
 
+    console.log('🔍 handleFinalAdd - Valores GUT antes de enviar:', {
+      gravity,
+      urgency,
+      tendency,
+      types: {
+        gravity: typeof gravity,
+        urgency: typeof urgency,
+        tendency: typeof tendency
+      }
+    });
+
     onAddItem({
       activity: finalActivity,
       details,
