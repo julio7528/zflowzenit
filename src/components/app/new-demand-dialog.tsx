@@ -281,6 +281,39 @@ export function NewBacklogItemDialog({ onAddItem }: NewBacklogItemDialogProps) {
               <DialogDescription>Defina um prazo para a entrega deste item.</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
+              <Label>Data de Início (Opcional)</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "justify-start text-left font-normal",
+                      "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    <span>Escolha uma data e hora</span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={undefined}
+                    onSelect={() => {}}
+                    initialFocus
+                    locale={ptBR}
+                  />
+                  <div className="p-2 border-t">
+                    <Input 
+                      type="time" 
+                      value=""
+                      onChange={() => {}}
+                      disabled
+                    />
+                  </div>
+                </PopoverContent>
+              </Popover>
+              
               <Label>Prazo</Label>
               <Popover>
                 <PopoverTrigger asChild>
@@ -292,31 +325,41 @@ export function NewBacklogItemDialog({ onAddItem }: NewBacklogItemDialogProps) {
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {deadline ? format(deadline, 'PPP', { locale: ptBR }) : <span>Escolha uma data</span>}
+                    {deadline ? format(deadline, 'PPP p', { locale: ptBR }) : <span>Escolha uma data e hora</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
                   <Calendar
                     mode="single"
                     selected={deadline || undefined}
-                    onSelect={(date) => setDeadline(date || null)}
+                    onSelect={(date) => {
+                      const newDeadline = date || null;
+                      if (newDeadline && deadline) {
+                        newDeadline.setHours(deadline.getHours());
+                        newDeadline.setMinutes(deadline.getMinutes());
+                      }
+                      setDeadline(newDeadline);
+                    }}
                     initialFocus
                     locale={ptBR}
                   />
+                  <div className="p-2 border-t">
+                    <Input 
+                      type="time" 
+                      value={deadline ? format(deadline, 'HH:mm') : ''}
+                      onChange={(e) => {
+                        const [hours, minutes] = e.target.value.split(':').map(Number);
+                        setDeadline(prev => {
+                          const newDate = prev ? new Date(prev) : new Date();
+                          newDate.setHours(hours, minutes);
+                          return newDate;
+                        });
+                      }}
+                      disabled={!deadline}
+                    />
+                  </div>
                 </PopoverContent>
               </Popover>
-               <Input 
-                type="time" 
-                value={deadline ? format(deadline, 'HH:mm') : ''}
-                onChange={(e) => {
-                  const [hours, minutes] = e.target.value.split(':').map(Number);
-                  setDeadline(prev => {
-                    const newDate = prev ? new Date(prev) : new Date();
-                    newDate.setHours(hours, minutes);
-                    return newDate;
-                  });
-                }}
-              />
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => navigateToStep(5)}>Voltar</Button>
