@@ -2,16 +2,18 @@
 
 import { useState, useEffect, createContext, useContext } from 'react'
 import { supabase } from '@/lib/supabase'
-import type { User } from '@supabase/supabase-js'
+import type { User, Session } from '@supabase/supabase-js'
 
 interface AuthContextType {
   user: User | null
+  session: Session | null
   loading: boolean
   signOut: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
+  session: null,
   loading: true,
   signOut: async () => {},
 })
@@ -26,22 +28,60 @@ export const useAuth = () => {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
+  const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Verificar sessão atual
+    // Check current session with error handling
     const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      setUser(session?.user ?? null)
-      setLoading(false)
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession()
+        
+        if (error) {
+          console.error('Error getting session:', error)
+          // If there's an error with the session (like invalid refresh token), 
+          // we should clear the session to allow user to log in again
+          if (error.message.includes('Invalid Refresh Token') || error.message.includes('Refresh Token Not Found')) {
+            console.warn('Invalid refresh token detected, signing out user')
+            await supabase.auth.signOut()
+            setUser(null)
+            setSession(null)
+            setLoading(false)
+            return
+          }
+        }
+        
+        setUser(session?.user ?? null)
+        setSession(session)
+        setLoading(false)
+      } catch (error) {
+        console.error('Unexpected error getting session:', error)
+        setUser(null)
+        setSession(null)
+        setLoading(false)
+      }
     }
 
     getSession()
 
-    // Escutar mudanças de autenticação
+    // Listen to auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setUser(session?.user ?? null)
+      async (event, newSession) => {
+        // Handle specific events related to session invalidation
+        if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESH_FAILED' || event === 'SIGNED_IN') {
+          if (event === 'TOKEN_REFRESH_FAILED') {
+            // If token refresh failed, clear any stored session data and redirect to login
+            console.warn('Token refresh failed, redirecting to login')
+            setUser(null)
+            setSession(null)
+          } else {
+            setUser(newSession?.user ?? null)
+            setSession(newSession)
+          }
+        } else {
+          setUser(newSession?.user ?? null)
+          setSession(newSession)
+        }
         setLoading(false)
       }
     )
@@ -50,11 +90,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const signOut = async () => {
-    await supabase.auth.signOut()
+    try {
+      const { error } = await supabase.auth.signOut()
+      if (error) {
+        console.error('Error signing out:', error)
+      }
+      setUser(null)
+      setSession(null)
+    } catch (error) {
+      console.error('Unexpected error during sign out:', error)
+      setUser(null)
+      setSession(null)
+    }
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   )

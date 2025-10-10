@@ -18,9 +18,21 @@ export default function LoginPage() {
 
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session) {
-        router.push('/dashboard')
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession()
+        
+        if (error) {
+          // If there's an error getting session (like invalid refresh token), just continue to login form
+          console.warn('Error getting session, proceeding to login form:', error)
+          return
+        }
+        
+        if (session) {
+          router.push('/dashboard')
+        }
+      } catch (error) {
+        // Handle unexpected errors
+        console.error('Unexpected error checking session:', error)
       }
     }
     checkUser()
@@ -48,7 +60,14 @@ export default function LoginPage() {
         router.push('/dashboard')
       }
     } catch (error: any) {
-      alert(error.message)
+      // Check if it's a refresh token related error message
+      if (error.message.includes('Invalid Refresh Token') || error.message.includes('Refresh Token Not Found')) {
+        // Clear any stored session data that might be causing the issue
+        await supabase.auth.signOut()
+        alert('Sessão expirada. Por favor, faça login novamente.')
+      } else {
+        alert(error.message)
+      }
     } finally {
       setLoading(false)
     }

@@ -454,53 +454,6 @@ export function NewBacklogItemDialog({ onAddItem, open: controlledOpen, onOpenCh
               <DialogDescription>Defina um prazo para a entrega deste item.</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <Label>Data de Início (Opcional)</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={cn(
-                      "justify-start text-left font-normal",
-                      !startDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {startDate ? format(startDate, 'PPP p', { locale: ptBR }) : <span>Escolha uma data e hora</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={startDate || undefined}
-                    onSelect={(date) => {
-                      const newStartDate = date || null;
-                      if (newStartDate && startDate) {
-                        newStartDate.setHours(startDate.getHours());
-                        newStartDate.setMinutes(startDate.getMinutes());
-                      }
-                      setStartDate(newStartDate);
-                    }}
-                    initialFocus
-                    locale={ptBR}
-                  />
-                  <div className="p-2 border-t">
-                    <Input 
-                      type="time" 
-                      value={startDate ? format(startDate, 'HH:mm') : ''}
-                      onChange={(e) => {
-                        const [hours, minutes] = e.target.value.split(':').map(Number);
-                        setStartDate(prev => {
-                          const newDate = prev ? new Date(prev) : new Date();
-                          newDate.setHours(hours, minutes);
-                          return newDate;
-                        });
-                      }}
-                      disabled={!startDate}
-                    />
-                  </div>
-                </PopoverContent>
-              </Popover>
-              
               <Label>Prazo</Label>
               <Popover>
                 <PopoverTrigger asChild>
@@ -512,39 +465,41 @@ export function NewBacklogItemDialog({ onAddItem, open: controlledOpen, onOpenCh
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {deadline ? format(deadline, 'PPP p', { locale: ptBR }) : <span>Escolha uma data e hora</span>}
+                    {deadline ? format(deadline, 'PPP', { locale: ptBR }) : <span>Escolha uma data</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
                   <Calendar
                     mode="single"
                     selected={deadline || undefined}
-                    onSelect={(date) => {
-                      const newDeadline = date || null;
-                      if (newDeadline && deadline) {
-                        newDeadline.setHours(deadline.getHours());
-                        newDeadline.setMinutes(deadline.getMinutes());
-                      }
-                      setDeadline(newDeadline);
-                    }}
+                    onSelect={(date) => setDeadline(date || null)}
                     initialFocus
                     locale={ptBR}
                   />
-                  <div className="p-2 border-t">
-                    <Input 
-                      type="time" 
-                      value={deadline ? format(deadline, 'HH:mm') : ''}
-                      onChange={(e) => {
-                        const [hours, minutes] = e.target.value.split(':').map(Number);
-                        setDeadline(prev => {
-                          const newDate = prev ? new Date(prev) : new Date();
-                          newDate.setHours(hours, minutes);
-                          return newDate;
-                        });
-                      }}
-                      disabled={!deadline}
-                    />
-                  </div>
+                </PopoverContent>
+              </Popover>
+              <Label>Data de Início (Opcional)</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "justify-start text-left font-normal",
+                      !startDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {startDate ? format(startDate, 'PPP', { locale: ptBR }) : <span>Escolha uma data</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={startDate || undefined}
+                    onSelect={(date) => setStartDate(date || null)}
+                    initialFocus
+                    locale={ptBR}
+                  />
                 </PopoverContent>
               </Popover>
             </div>

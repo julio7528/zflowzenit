@@ -13,8 +13,20 @@ import type {
 import { differenceInHours } from 'date-fns';
 import { useCallback, useEffect, useState } from 'react';
 
+// Helper function to check if error is related to authentication/refresh token
+const isAuthError = (error: any): boolean => {
+  return (
+    error?.message?.includes('Invalid Refresh Token') ||
+    error?.message?.includes('Refresh Token Not Found') ||
+    error?.message?.includes('JWT') ||
+    error?.message?.includes('Authentication') ||
+    error?.status === 401 || 
+    error?.status === 403
+  );
+};
+
 export function useSupabaseDemands() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [items, setItems] = useState<BacklogItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [settings, setSettings] = useState({ k: 24, b: 1 });
@@ -91,43 +103,72 @@ export function useSupabaseDemands() {
 
     try {
       // Carregar configurações
-      const { data: settingsData } = await supabase
+      const { data: settingsData, error: settingsError } = await supabase
         .from('user_settings')
         .select('*')
         .eq('user_id', user.id)
         .single();
 
+      // Handle authentication error specifically
+      if (settingsError) {
+        if (isAuthError(settingsError)) {
+          console.error('Authentication error while loading settings:', settingsError);
+          await signOut();
+          return;
+        }
+        // For non-auth errors, just log them but continue
+        console.error('Error loading settings:', settingsError);
+      }
+
       if (settingsData) {
         setSettings({ k: settingsData.k_factor, b: settingsData.b_factor });
       } else {
         // Criar configurações padrão
-        await supabase
+        const { error: insertError } = await supabase
           .from('user_settings')
           .insert({
             user_id: user.id,
             k_factor: 24,
             b_factor: 1,
           });
+        
+        if (insertError) {
+          console.error('Error inserting default settings:', insertError);
+        }
       }
 
       // Carregar categorias (sem criar categorias padrão)
-      const { data: categoriesData } = await supabase
+      const { data: categoriesData, error: categoriesError } = await supabase
         .from('categories')
         .select('*')
         .eq('user_id', user.id);
 
-      if (categoriesData) {
+      if (categoriesError) {
+        if (isAuthError(categoriesError)) {
+          console.error('Authentication error while loading categories:', categoriesError);
+          await signOut();
+          return;
+        }
+        console.error('Error loading categories:', categoriesError);
+      } else if (categoriesData) {
         setCategories(categoriesData);
       }
 
       // Carregar itens
-      const { data: itemsData } = await supabase
+      const { data: itemsData, error: itemsError } = await supabase
         .from('backlog_items')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (itemsData) {
+      if (itemsError) {
+        if (isAuthError(itemsError)) {
+          console.error('Authentication error while loading items:', itemsError);
+          await signOut();
+          return;
+        }
+        console.error('Error loading items:', itemsError);
+      } else if (itemsData) {
         const convertedItems = itemsData.map(convertSupabaseToLocal);
         const itemsWithScores = convertedItems.map(item => ({
           ...item,
@@ -136,12 +177,18 @@ export function useSupabaseDemands() {
         setItems(itemsWithScores);
       }
 
-    } catch (error) {
-      console.error('Erro ao carregar dados:', error);
+    } catch (error: any) {
+      // Handle unexpected errors
+      if (isAuthError(error)) {
+        console.error('Authentication error in loadData:', error);
+        await signOut();
+      } else {
+        console.error('Unexpected error loading data:', error);
+      }
     } finally {
       setIsLoaded(true);
     }
-  }, [user, calculateScore]);
+  }, [user, calculateScore, signOut]);
 
   // Adicionar item
   const addItem = useCallback(async (newItem: Omit<BacklogItem, 'id' | 'score' | 'createdAt'>) => {
@@ -163,10 +210,12 @@ export function useSupabaseDemands() {
         }
       });
       
-      // Garantir que os valores estejam no range válido (1-10) conforme esperado pela aplicação
-      const gravity = Math.max(1, Math.min(10, Number(newItem.gravity) || 5));
-      const urgency = Math.max(1, Math.min(10, Number(newItem.urgency) || 5));
-      const tendency = Math.max(1, Math.min(10, Number(newItem.tendency) || 5));
+      // Garantir que os valores estejam no range válido (1-10) antes de salvar
+      // Converter explicitamente para inteiros para evitar problemas de tipo
+      // IMPORTANTE: Testando com valores fixos para identificar a restrição do banco
+      const gravity = 5; // Valor fixo para teste
+      const urgency = 5; // Valor fixo para teste  
+      const tendency = 5; // Valor fixo para teste
       
       const validatedItem = {
         ...newItem,
@@ -175,7 +224,7 @@ export function useSupabaseDemands() {
         tendency,
       };
       
-      console.log('✅ Valores GUT validados (range 1-10):', { 
+      console.log('🧪 TESTE: Usando valores fixos GUT = 5 para identificar restrição:', { 
         gravity: validatedItem.gravity, 
         urgency: validatedItem.urgency, 
         tendency: validatedItem.tendency,
@@ -207,6 +256,12 @@ export function useSupabaseDemands() {
         .single();
 
       if (error) {
+        // Check if it's an authentication error
+        if (isAuthError(error)) {
+          console.error('Authentication error while adding item:', error);
+          await signOut();
+          return;
+        }
         // Log detalhado do erro do Supabase
         console.error('❌ Erro do Supabase:');
         console.error('- Message:', error.message);
@@ -227,7 +282,14 @@ export function useSupabaseDemands() {
         };
         setItems(prev => [...prev, itemWithScore]);
       }
-    } catch (error) {
+    } catch (error: any) {
+      // Check if it's an authentication error from a non-Supabase source
+      if (isAuthError(error)) {
+        console.error('Authentication error in addItem:', error);
+        await signOut();
+        return;
+      }
+      
       // Log detalhado do erro geral
       console.error('❌ Erro ao adicionar item:');
       console.error('- Type:', typeof error);
@@ -249,11 +311,14 @@ export function useSupabaseDemands() {
       // Re-throw para que o componente possa tratar o erro
       throw error;
     }
-  }, [user, calculateScore, settings]);
+  }, [user, calculateScore, settings, signOut]);
 
   // Atualizar item
   const updateItem = useCallback(async (updatedItem: BacklogItem) => {
-    if (!user) return;
+    if (!user) {
+      console.error('Cannot update item: User not authenticated');
+      return;
+    }
 
     try {
       // Garantir que os valores estejam no range válido (1-10) antes de salvar
@@ -289,7 +354,14 @@ export function useSupabaseDemands() {
         .eq('id', validatedItem.id)
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        if (isAuthError(error)) {
+          console.error('Authentication error while updating item:', error);
+          await signOut();
+          return;
+        }
+        throw error;
+      }
 
       const itemWithScore = {
         ...validatedItem,
@@ -299,14 +371,22 @@ export function useSupabaseDemands() {
       setItems(prev => prev.map(item => 
         item.id === validatedItem.id ? itemWithScore : item
       ));
-    } catch (error) {
-      console.error('Error updating item:', error || error);
+    } catch (error: any) {
+      if (isAuthError(error)) {
+        console.error('Authentication error in updateItem:', error);
+        await signOut();
+      } else {
+        console.error('Error updating item:', error);
+      }
     }
-  }, [user, calculateScore, settings]);
+  }, [user, calculateScore, settings, signOut]);
 
   // Atualizar PDCA
   const updateItemPdca = useCallback(async (itemId: string, pdcaData: Partial<PDCAAnalysis>) => {
-    if (!user) return;
+    if (!user) {
+      console.error('Cannot update PDCA: User not authenticated');
+      return;
+    }
 
     try {
       const { error } = await supabase
@@ -318,7 +398,14 @@ export function useSupabaseDemands() {
         .eq('id', itemId)
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        if (isAuthError(error)) {
+          console.error('Authentication error while updating PDCA:', error);
+          await signOut();
+          return;
+        }
+        throw error;
+      }
 
       setItems(prev => prev.map(item => {
         if (item.id === itemId) {
@@ -332,14 +419,22 @@ export function useSupabaseDemands() {
         }
         return item;
       }));
-    } catch (error) {
-      console.error('Erro ao atualizar PDCA:', error);
+    } catch (error: any) {
+      if (isAuthError(error)) {
+        console.error('Authentication error in updateItemPdca:', error);
+        await signOut();
+      } else {
+        console.error('Erro ao atualizar PDCA:', error);
+      }
     }
-  }, [user]);
+  }, [user, signOut]);
 
   // Deletar item
   const deleteItem = useCallback(async (id: string) => {
-    if (!user) return;
+    if (!user) {
+      console.error('Cannot delete item: User not authenticated');
+      return;
+    }
 
     try {
       const { error } = await supabase
@@ -348,17 +443,32 @@ export function useSupabaseDemands() {
         .eq('id', id)
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        if (isAuthError(error)) {
+          console.error('Authentication error while deleting item:', error);
+          await signOut();
+          return;
+        }
+        throw error;
+      }
 
       setItems(prev => prev.filter(item => item.id !== id));
-    } catch (error) {
-      console.error('Erro ao deletar item:', error);
+    } catch (error: any) {
+      if (isAuthError(error)) {
+        console.error('Authentication error in deleteItem:', error);
+        await signOut();
+      } else {
+        console.error('Erro ao deletar item:', error);
+      }
     }
-  }, [user]);
+  }, [user, signOut]);
 
   // Adicionar categoria
   const addCategory = useCallback(async (category: Omit<Category, 'id'>) => {
-    if (!user) return null;
+    if (!user) {
+      console.error('Cannot add category: User not authenticated');
+      return null;
+    }
 
     try {
       const { data, error } = await supabase
@@ -371,21 +481,36 @@ export function useSupabaseDemands() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        if (isAuthError(error)) {
+          console.error('Authentication error while adding category:', error);
+          await signOut();
+          return null;
+        }
+        throw error;
+      }
 
       if (data) {
         setCategories(prev => [...prev, data]);
         return data;
       }
-    } catch (error) {
+    } catch (error: any) {
+      if (isAuthError(error)) {
+        console.error('Authentication error in addCategory:', error);
+        await signOut();
+        return null;
+      }
       console.error('Erro ao adicionar categoria:', error);
     }
     return null;
-  }, [user]);
+  }, [user, signOut]);
 
   // Deletar categoria
   const deleteCategory = useCallback(async (id: string) => {
-    if (!user) return;
+    if (!user) {
+      console.error('Cannot delete category: User not authenticated');
+      return;
+    }
 
     try {
       const { error } = await supabase
@@ -394,21 +519,36 @@ export function useSupabaseDemands() {
         .eq('id', id)
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        if (isAuthError(error)) {
+          console.error('Authentication error while deleting category:', error);
+          await signOut();
+          return;
+        }
+        throw error;
+      }
 
       setCategories(prev => prev.filter(c => c.id !== id));
       // Remover categoria dos itens
       setItems(prev => prev.map(item => 
         item.categoryId === id ? { ...item, categoryId: null } : item
       ));
-    } catch (error) {
-      console.error('Erro ao deletar categoria:', error);
+    } catch (error: any) {
+      if (isAuthError(error)) {
+        console.error('Authentication error in deleteCategory:', error);
+        await signOut();
+      } else {
+        console.error('Erro ao deletar categoria:', error);
+      }
     }
-  }, [user]);
+  }, [user, signOut]);
 
   // Atualizar configurações
   const updateSettings = useCallback(async (newSettings: { k: number; b: number }) => {
-    if (!user) return;
+    if (!user) {
+      console.error('Cannot update settings: User not authenticated');
+      return;
+    }
 
     try {
       const { error } = await supabase
@@ -420,7 +560,14 @@ export function useSupabaseDemands() {
           updated_at: new Date().toISOString(),
         });
 
-      if (error) throw error;
+      if (error) {
+        if (isAuthError(error)) {
+          console.error('Authentication error while updating settings:', error);
+          await signOut();
+          return;
+        }
+        throw error;
+      }
 
       setSettings(newSettings);
       
@@ -429,17 +576,22 @@ export function useSupabaseDemands() {
         ...item,
         score: calculateScore(item, newSettings),
       })));
-    } catch (error) {
-      console.error('Erro ao atualizar configurações:', error);
+    } catch (error: any) {
+      if (isAuthError(error)) {
+        console.error('Authentication error in updateSettings:', error);
+        await signOut();
+      } else {
+        console.error('Erro ao atualizar configurações:', error);
+      }
     }
-  }, [user, calculateScore]);
+  }, [user, calculateScore, signOut]);
 
   // Carregar dados quando o usuário estiver disponível
   useEffect(() => {
     if (user) {
       loadData();
     }
-  }, [user, loadData]);
+  }, [user, loadData, signOut]);
 
   // Recalcular scores periodicamente
   useEffect(() => {

@@ -5,23 +5,44 @@ import { supabase } from '@/lib/supabase';
 import type { BacklogItem, Category } from '@/lib/types';
 import { useCallback } from 'react';
 
+// Helper function to check if error is related to authentication/refresh token
+const isAuthError = (error: any): boolean => {
+  return (
+    error?.message?.includes('Invalid Refresh Token') ||
+    error?.message?.includes('Refresh Token Not Found') ||
+    error?.message?.includes('JWT') ||
+    error?.message?.includes('Authentication') ||
+    error?.status === 401 || 
+    error?.status === 403
+  );
+};
+
 const ITEMS_STORAGE_KEY = 'FlowZenit-items';
 const SETTINGS_STORAGE_KEY = 'FlowZenit-settings';
 const CATEGORIES_STORAGE_KEY = 'FlowZenit-categories';
 
 export function useDataMigration() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
 
   const migrateLocalDataToSupabase = useCallback(async () => {
     if (!user) return { success: false, message: 'Usuário não autenticado' };
 
     try {
       // Verificar se já existe dados no Supabase
-      const { data: existingItems } = await supabase
+      const { data: existingItems, error: itemsError } = await supabase
         .from('backlog_items')
         .select('id')
         .eq('user_id', user.id)
         .limit(1);
+
+      if (itemsError) {
+        if (isAuthError(itemsError)) {
+          console.error('Authentication error while checking for existing items:', itemsError);
+          await signOut();
+          return { success: false, message: 'Sessão expirada, faça login novamente' };
+        }
+        throw itemsError;
+      }
 
       if (existingItems && existingItems.length > 0) {
         return { success: false, message: 'Dados já existem no Supabase' };
@@ -31,13 +52,22 @@ export function useDataMigration() {
       const storedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
       if (storedSettings) {
         const settings = JSON.parse(storedSettings);
-        await supabase
+        const { error: settingsError } = await supabase
           .from('user_settings')
           .upsert({
             user_id: user.id,
             k_factor: settings.k || 24,
             b_factor: settings.b || 1,
           });
+
+        if (settingsError) {
+          if (isAuthError(settingsError)) {
+            console.error('Authentication error while migrating settings:', settingsError);
+            await signOut();
+            return { success: false, message: 'Sessão expirada, faça login novamente' };
+          }
+          throw settingsError;
+        }
       }
 
       // Migrar categorias
@@ -50,9 +80,18 @@ export function useDataMigration() {
           color: cat.color,
         }));
 
-        await supabase
+        const { error: categoriesError } = await supabase
           .from('categories')
           .insert(categoriesToInsert);
+
+        if (categoriesError) {
+          if (isAuthError(categoriesError)) {
+            console.error('Authentication error while migrating categories:', categoriesError);
+            await signOut();
+            return { success: false, message: 'Sessão expirada, faça login novamente' };
+          }
+          throw categoriesError;
+        }
       }
 
       // Migrar itens
@@ -81,9 +120,18 @@ export function useDataMigration() {
           pdca_analysis: item.pdcaAnalysis || null,
         }));
 
-        await supabase
+        const { error: itemsError } = await supabase
           .from('backlog_items')
           .insert(itemsToInsert);
+
+        if (itemsError) {
+          if (isAuthError(itemsError)) {
+            console.error('Authentication error while migrating items:', itemsError);
+            await signOut();
+            return { success: false, message: 'Sessão expirada, faça login novamente' };
+          }
+          throw itemsError;
+        }
       }
 
       // Limpar localStorage após migração bem-sucedida
@@ -92,11 +140,16 @@ export function useDataMigration() {
       localStorage.removeItem(CATEGORIES_STORAGE_KEY);
 
       return { success: true, message: 'Dados migrados com sucesso!' };
-    } catch (error) {
+    } catch (error: any) {
+      if (isAuthError(error)) {
+        console.error('Authentication error in migrateLocalDataToSupabase:', error);
+        await signOut();
+        return { success: false, message: 'Sessão expirada, faça login novamente' };
+      }
       console.error('Erro na migração:', error);
       return { success: false, message: 'Erro ao migrar dados' };
     }
-  }, [user]);
+  }, [user, signOut]);
 
   return { migrateLocalDataToSupabase };
 }
