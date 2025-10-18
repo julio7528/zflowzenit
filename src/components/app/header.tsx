@@ -24,13 +24,13 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/90 px-4 backdrop-blur-md sm:px-6 lg:px-8 shadow-sm">
       <div className="flex items-center gap-4">
         <Button
             variant="ghost"
             size="icon"
             onClick={toggleSidebar}
-            className="h-8 w-8"
+            className="h-10 w-10 rounded-lg"
         >
             {state === 'expanded' ? <ChevronLeft /> : <ChevronRight />}
             <span className="sr-only">Toggle Sidebar</span>
@@ -39,10 +39,10 @@ export function Header() {
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+          <Button variant="ghost" className="relative h-10 w-10 rounded-full ring-1 ring-border hover:ring-primary">
             <Avatar className="h-8 w-8">
               <AvatarImage src={user?.user_metadata?.avatar_url || "https://i.pravatar.cc/150?u=a042581f4e29026704d"} alt="@user" />
-              <AvatarFallback>{user?.email?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
+              <AvatarFallback className="text-xs">{user?.email?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
             </Avatar>
           </Button>
         </DropdownMenuTrigger>
@@ -68,7 +68,7 @@ export function Header() {
             <Link href="/settings">Configurações</Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleSignOut}>
+          <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
             Sair
           </DropdownMenuItem>
         </DropdownMenuContent>

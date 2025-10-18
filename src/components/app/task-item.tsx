@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { BacklogItem, Category, KanbanStatus } from '@/lib/types';
 import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
@@ -54,8 +54,93 @@ const statusTranslations: Record<KanbanStatus, string> = {
     done: 'Concluído',
 };
 
+// Rótulos e comentários GUT (1..10)
+const GRAVITY_LABELS = [
+  '',
+  'Nenhuma gravidade',
+  'Muito baixa',
+  'Baixa',
+  'Moderada',
+  'Relevante',
+  'Alta',
+  'Muito alta',
+  'Crítica',
+  'Muito crítica',
+  'Extremamente crítica'
+];
+const GRAVITY_DESCRIPTIONS = [
+  '',
+  'Não causa impacto perceptível.',
+  'Impacto mínimo e isolado.',
+  'Pequeno prejuízo local, fácil de corrigir.',
+  'Afeta resultados pontuais, mas controláveis.',
+  'Prejuízo financeiro ou operacional considerável.',
+  'Afeta mais de um processo ou equipe.',
+  'Pode interromper parcialmente atividades importantes.',
+  'Compromete metas e resultados significativos.',
+  'Causa perdas severas, financeiras ou de imagem.',
+  'Ameaça a sobrevivência da operação ou negócio.'
+];
+
+const URGENCY_LABELS = [
+  '',
+  'Pode esperar',
+  'Muito baixa',
+  'Baixa',
+  'Moderada',
+  'Relevante',
+  'Alta',
+  'Muito alta',
+  'Crítica',
+  'Muito crítica',
+  'Extremamente crítica'
+];
+const URGENCY_DESCRIPTIONS = [
+  '',
+  'Pode ser resolvido a longo prazo, sem impacto.',
+  'Pode ser tratado eventualmente.',
+  'Deve ser observado em breve.',
+  'Precisa de solução no médio prazo.',
+  'Requer ação em semanas.',
+  'Necessário agir em poucos dias.',
+  'Demanda resposta imediata nesta semana.',
+  'Exige ação nas próximas 24 horas.',
+  'Ação necessária nas próximas horas.',
+  'Requer ação imediata — não pode esperar.'
+];
+
+const TENDENCY_LABELS = [
+  '',
+  'Estável',
+  'Muito baixa',
+  'Baixa',
+  'Moderada',
+  'Relevante',
+  'Alta',
+  'Muito alta',
+  'Crítica',
+  'Muito crítica',
+  'Extremamente crítica'
+];
+const TENDENCY_DESCRIPTIONS = [
+  '',
+  'Não apresenta sinais de piora.',
+  'Pode se agravar apenas a longo prazo.',
+  'Leve risco de piora no futuro distante.',
+  'Tende a piorar lentamente.',
+  'Mostra sinais de crescimento gradual.',
+  'Deve piorar perceptivelmente a médio prazo.',
+  'Piora rapidamente em semanas.',
+  'Piora em questão de dias.',
+  'Pode sair de controle em horas.',
+  'Já está agravando e exige ação imediata.'
+];
+
 export function TaskItem({ item, onUpdateItem, onDeleteItem, onConvertToTask, category, pageType = 'backlog' }: TaskItemProps) {
   const [localItem, setLocalItem] = useState(item);
+  useEffect(() => {
+    setLocalItem(item);
+  }, [item]);
   const isInactiveItem = item.category === 'reference' || item.category === 'future';
   const isInProgressView = pageType === 'in-progress';
 
@@ -68,8 +153,21 @@ export function TaskItem({ item, onUpdateItem, onDeleteItem, onConvertToTask, ca
     onUpdateItem(localItem);
   };
 
-  const scoreColor =
-    item.score > 500 ? 'bg-red-500' : item.score > 200 ? 'bg-yellow-500' : 'bg-green-500';
+  const getCategoryColor = (category: string): string => {
+    switch(category) {
+      case 'task': return 'bg-task';
+      case 'project': return 'bg-project';
+      case 'future': return 'bg-future';
+      case 'reference': return 'bg-reference';
+      default: return 'bg-muted';
+    }
+  };
+
+  const scoreColor = item.score > 500 
+    ? 'bg-red-600 dark:bg-red-700' 
+    : item.score > 200 
+      ? 'bg-yellow-600 dark:bg-yellow-700' 
+      : 'bg-green-600 dark:bg-green-700';
 
   const isOverdue = item.deadline && isPast(item.deadline);
   
@@ -88,10 +186,12 @@ export function TaskItem({ item, onUpdateItem, onDeleteItem, onConvertToTask, ca
        )}
 
         <div className="flex-grow">
-          <p className={cn("font-medium", 'text-foreground')}>{item.activity}</p>
-          <div className={cn("flex items-center gap-4 text-sm mt-2 flex-wrap", 'text-muted-foreground')}>
-            {isInProgressView && <Badge variant='default'>{statusTranslations[item.status]}</Badge>}
-            {item.category === 'project' ? <Badge variant='secondary'>Projeto</Badge> : <Badge variant='outline'>{item.category}</Badge>}
+          <p className={cn("font-medium text-lg", 'text-foreground')}>{item.activity}</p>
+          <div className={cn("flex items-center gap-3 text-sm mt-2 flex-wrap", 'text-muted-foreground')}>
+            {isInProgressView && <Badge variant='default' className={cn(getCategoryColor(item.category))}>{statusTranslations[item.status]}</Badge>}
+            <Badge variant='outline' className={cn(getCategoryColor(item.category), 'border-transparent')} style={{ color: '#D1D5DB' }}>
+              {item.category === 'project' ? 'Projeto' : item.category === 'task' ? 'Tarefa' : item.category}
+            </Badge>
             {category && <Badge style={{ backgroundColor: category.color, color: 'white' }}>{category.name}</Badge>}
             {item.category === 'project' && item.startDate && item.deadline && (
               <div className={cn("flex items-center gap-1", isOverdue && 'text-destructive font-medium')}>
@@ -102,8 +202,16 @@ export function TaskItem({ item, onUpdateItem, onDeleteItem, onConvertToTask, ca
                 </span>
               </div>
             )}
+            {item.category !== 'project' && item.startDate && (
+              <div className={cn("flex items-center gap-1 text-xs", 'text-foreground')}>
+                <Clock className="h-4 w-4" />
+                <span>
+                  Início: {format(item.startDate, 'PP', { locale: ptBR })}
+                </span>
+              </div>
+            )}
             {item.category !== 'project' && item.deadline && (
-              <div className={cn("flex items-center gap-1", isOverdue && 'text-destructive font-medium')}>
+              <div className={cn("flex items-center gap-1 text-xs", isOverdue ? 'text-destructive font-medium' : 'text-foreground')}>
                 <CalendarIcon className="h-4 w-4" />
                 <span>
                   {format(item.deadline, 'PP', { locale: ptBR })} (
@@ -111,7 +219,7 @@ export function TaskItem({ item, onUpdateItem, onDeleteItem, onConvertToTask, ca
                 </span>
               </div>
             )}
-             {(isInactiveItem) && item.createdAt && (
+            {(isInactiveItem) && item.createdAt && (
               <div className="flex items-center gap-1 text-xs">
                 <Clock className="h-3 w-3" />
                 <span>
@@ -140,38 +248,38 @@ export function TaskItem({ item, onUpdateItem, onDeleteItem, onConvertToTask, ca
                         <h4 className="font-medium leading-none">Ajustar GUT</h4>
                         <p className="text-sm text-muted-foreground">Ajuste os componentes de prioridade.</p>
                         </div>
-                        <div className="grid gap-2">
-                        <div className="grid grid-cols-3 items-center gap-4">
-                            <Label htmlFor="gravity">Gravidade</Label>
+                        <div className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="gravity">Gravidade: {localItem.gravity} - {GRAVITY_LABELS[localItem.gravity]} ({GRAVITY_DESCRIPTIONS[localItem.gravity]})</Label>
                             <Slider
                             id="gravity"
                             value={[localItem.gravity]}
                             onValueChange={(v) => handleGUTChange('gravity', v[0])}
                             max={10}
                             step={1}
-                            className="col-span-2"
+                            className="w-full"
                             />
                         </div>
-                        <div className="grid grid-cols-3 items-center gap-4">
-                            <Label htmlFor="urgency">Urgência</Label>
+                        <div className="space-y-2">
+                            <Label htmlFor="urgency">Urgência: {localItem.urgency} - {URGENCY_LABELS[localItem.urgency]} ({URGENCY_DESCRIPTIONS[localItem.urgency]})</Label>
                             <Slider
                             id="urgency"
                             value={[localItem.urgency]}
                             onValueChange={(v) => handleGUTChange('urgency', v[0])}
                             max={10}
                             step={1}
-                            className="col-span-2"
+                            className="w-full"
                             />
                         </div>
-                        <div className="grid grid-cols-3 items-center gap-4">
-                            <Label htmlFor="tendency">Tendência</Label>
+                        <div className="space-y-2">
+                            <Label htmlFor="tendency">Tendência: {localItem.tendency} - {TENDENCY_LABELS[localItem.tendency]} ({TENDENCY_DESCRIPTIONS[localItem.tendency]})</Label>
                             <Slider
                             id="tendency"
                             value={[localItem.tendency]}
                             onValueChange={(v) => handleGUTChange('tendency', v[0])}
                             max={10}
                             step={1}
-                            className="col-span-2"
+                            className="w-full"
                             />
                         </div>
                         </div>

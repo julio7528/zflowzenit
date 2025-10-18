@@ -30,6 +30,88 @@ type EditBacklogItemDialogProps = {
   onUpdateItem: (item: BacklogItem) => void;
 };
 
+// Rótulos e comentários GUT (1..10)
+const GRAVITY_LABELS = [
+  '',
+  'Nenhuma gravidade',
+  'Muito baixa',
+  'Baixa',
+  'Moderada',
+  'Relevante',
+  'Alta',
+  'Muito alta',
+  'Crítica',
+  'Muito crítica',
+  'Extremamente crítica'
+];
+const GRAVITY_DESCRIPTIONS = [
+  '',
+  'Não causa impacto perceptível.',
+  'Impacto mínimo e isolado.',
+  'Pequeno prejuízo local, fácil de corrigir.',
+  'Afeta resultados pontuais, mas controláveis.',
+  'Prejuízo financeiro ou operacional considerável.',
+  'Afeta mais de um processo ou equipe.',
+  'Pode interromper parcialmente atividades importantes.',
+  'Compromete metas e resultados significativos.',
+  'Causa perdas severas, financeiras ou de imagem.',
+  'Ameaça a sobrevivência da operação ou negócio.'
+];
+
+const URGENCY_LABELS = [
+  '',
+  'Pode esperar',
+  'Muito baixa',
+  'Baixa',
+  'Moderada',
+  'Relevante',
+  'Alta',
+  'Muito alta',
+  'Crítica',
+  'Muito crítica',
+  'Extremamente crítica'
+];
+const URGENCY_DESCRIPTIONS = [
+  '',
+  'Pode ser resolvido a longo prazo, sem impacto.',
+  'Pode ser tratado eventualmente.',
+  'Deve ser observado em breve.',
+  'Precisa de solução no médio prazo.',
+  'Requer ação em semanas.',
+  'Necessário agir em poucos dias.',
+  'Demanda resposta imediata nesta semana.',
+  'Exige ação nas próximas 24 horas.',
+  'Ação necessária nas próximas horas.',
+  'Requer ação imediata — não pode esperar.'
+];
+
+const TENDENCY_LABELS = [
+  '',
+  'Estável',
+  'Muito baixa',
+  'Baixa',
+  'Moderada',
+  'Relevante',
+  'Alta',
+  'Muito alta',
+  'Crítica',
+  'Muito crítica',
+  'Extremamente crítica'
+];
+const TENDENCY_DESCRIPTIONS = [
+  '',
+  'Não apresenta sinais de piora.',
+  'Pode se agravar apenas a longo prazo.',
+  'Leve risco de piora no futuro distante.',
+  'Tende a piorar lentamente.',
+  'Mostra sinais de crescimento gradual.',
+  'Deve piorar perceptivelmente a médio prazo.',
+  'Piora rapidamente em semanas.',
+  'Piora em questão de dias.',
+  'Pode sair de controle em horas.',
+  'Já está agravando e exige ação imediata.'
+];
+
 export function EditBacklogItemDialog({ item, onUpdateItem }: EditBacklogItemDialogProps) {
   const [open, setOpen] = useState(false);
   const [activity, setActivity] = useState(item.activity);
@@ -151,7 +233,7 @@ export function EditBacklogItemDialog({ item, onUpdateItem }: EditBacklogItemDia
             </Popover>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="gravity">Gravidade: {gravity}</Label>
+            <Label htmlFor="gravity">Gravidade: {gravity} - {GRAVITY_LABELS[gravity]} ({GRAVITY_DESCRIPTIONS[gravity]})</Label>
             <Slider
               id="gravity"
               value={[gravity]}
@@ -159,10 +241,11 @@ export function EditBacklogItemDialog({ item, onUpdateItem }: EditBacklogItemDia
               max={10}
               min={1}
               step={1}
+              className="w-full"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="urgency">Urgência: {urgency}</Label>
+            <Label htmlFor="urgency">Urgência: {urgency} - {URGENCY_LABELS[urgency]} ({URGENCY_DESCRIPTIONS[urgency]})</Label>
             <Slider
               id="urgency"
               value={[urgency]}
@@ -170,10 +253,11 @@ export function EditBacklogItemDialog({ item, onUpdateItem }: EditBacklogItemDia
               max={10}
               min={1}
               step={1}
+              className="w-full"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="tendency">Tendência: {tendency}</Label>
+            <Label htmlFor="tendency">Tendência: {tendency} - {TENDENCY_LABELS[tendency]} ({TENDENCY_DESCRIPTIONS[tendency]})</Label>
             <Slider
               id="tendency"
               value={[tendency]}
@@ -181,6 +265,7 @@ export function EditBacklogItemDialog({ item, onUpdateItem }: EditBacklogItemDia
               max={10}
               min={1}
               step={1}
+              className="w-full"
             />
           </div>
         </div>

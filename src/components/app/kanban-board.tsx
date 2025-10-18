@@ -17,7 +17,6 @@ import { cn } from '@/lib/utils';
 import { isPast, startOfDay } from 'date-fns';
 import { Briefcase, Calendar as CalendarIcon, FilterX, Rocket, Trash2 } from 'lucide-react';
 import { DragEvent, useMemo, useState } from 'react';
-import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Calendar } from '../ui/calendar';
 import { Card, CardContent } from '../ui/card';
@@ -219,12 +218,104 @@ function KanbanCard({
   onDragStart: (e: DragEvent<HTMLDivElement>) => void;
   category?: Category;
 }) {
-  const isOverdue = item.deadline && isPast(item.deadline);
+  const isCompleted = item.status === 'done';
+  const isOverdue = !isCompleted && item.deadline && isPast(item.deadline);
 
   const getPriorityColor = () => {
-    if (item.score > 500) return 'bg-red-500';
-    if (item.score > 200) return 'bg-yellow-500';
-    return 'bg-green-500';
+    if (item.score > 500) return 'bg-red-600 dark:bg-red-700';
+    if (item.score > 200) return 'bg-yellow-600 dark:bg-yellow-700';
+    return 'bg-green-600 dark:bg-green-700';
+  };
+
+  const getCategoryColor = (category: string): string => {
+    switch(category) {
+      case 'task': return 'bg-task';
+      case 'project': return 'bg-project';
+      case 'future': return 'bg-future';
+      case 'reference': return 'bg-reference';
+      default: return 'bg-muted';
+    }
+  };
+
+  // Function to calculate text color based on background for proper contrast
+  const getTextColor = (bgColor: string): string => {
+    if (!bgColor) return "text-foreground"; // Default to standard text color
+    
+    // Remove any alpha transparency and convert to proper format
+    let color = bgColor.toLowerCase();
+    
+    // Handle hex colors
+    if (color.startsWith('#')) {
+      // Convert hex to RGB
+      let r = parseInt(color.substr(1, 2), 16);
+      let g = parseInt(color.substr(3, 2), 16);
+      let b = parseInt(color.substr(5, 2), 16);
+      
+      // Calculate brightness
+      const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+      return brightness > 150 ? "text-foreground" : "text-primary-foreground"; // Dark text on light bg, light on dark
+    } 
+    // Handle RGB/RGBA
+    else if (color.startsWith('rgb')) {
+      const match = color.match(/\d+/g);
+      if (match && match.length >= 3) {
+        const r = parseInt(match[0]);
+        const g = parseInt(match[1]);
+        const b = parseInt(match[2]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        return brightness > 150 ? "text-foreground" : "text-primary-foreground";
+      }
+    }
+    // For Tailwind classes, use default
+    else {
+      // If it's a standard Tailwind color class, we'll use the standard approach
+      // Lighter backgrounds get dark text, darker get light text
+      if (color.includes('100') || color.includes('200') || color.includes('300') || 
+          color.includes('50') || color.includes('white')) {
+        return "text-foreground";
+      } else {
+        return "text-primary-foreground";
+      }
+    }
+    
+    // Default to text-foreground if we can't determine
+    return "text-foreground";
+  };
+
+  // Function to determine if background is light or dark
+  const getContrastColor = (bgColor: string): string => {
+    if (!bgColor) return "white";
+    
+    let color = bgColor.toLowerCase();
+    
+    // Handle hex colors
+    if (color.startsWith('#')) {
+      let r = parseInt(color.substr(1, 2), 16);
+      let g = parseInt(color.substr(3, 2), 16);
+      let b = parseInt(color.substr(5, 2), 16);
+      
+      const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+      return brightness > 150 ? "text-foreground" : "white";
+    } 
+    // Handle RGB/RGBA
+    else if (color.startsWith('rgb')) {
+      const match = color.match(/\d+/g);
+      if (match && match.length >= 3) {
+        const r = parseInt(match[0]);
+        const g = parseInt(match[1]);
+        const b = parseInt(match[2]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        return brightness > 150 ? "text-foreground" : "white";
+      }
+    }
+    // Default for other cases
+    else if (color.includes('100') || color.includes('200') || color.includes('300') || 
+             color.includes('50') || color.includes('white') || color.includes('yellow') || 
+             color.includes('green') || color.includes('blue')) {
+      return "text-foreground";
+    }
+    
+    return "white";
   };
 
   return (
@@ -232,68 +323,137 @@ function KanbanCard({
       draggable
       onDragStart={onDragStart}
       className={cn(
-        'shadow hover:shadow-md transition-shadow group relative cursor-grab active:cursor-grabbing text-sm',
-        isOverdue ? 'border border-destructive' : ''
+        'shadow-sm hover:shadow-md transition-all duration-200 group relative cursor-grab active:cursor-grabbing border bg-card rounded-xl overflow-hidden flex flex-col',
+        isCompleted ? 'border-green-500/50 bg-green-50/30' : '',
+        !isCompleted && isOverdue ? 'border-destructive/50 bg-destructive/5' : 'hover:border-border/50'
       )}
     >
       <div
         className={cn(
-          'absolute top-0 left-0 right-0 h-1 rounded-t-lg',
-          isOverdue ? 'bg-destructive' : getPriorityColor()
+          'absolute top-0 left-0 right-0 h-1',
+          isCompleted ? 'bg-green-500' : isOverdue ? 'bg-destructive' : getPriorityColor()
         )}
       />
-      <CardContent className="p-2 pt-3">
-        <p className={cn("font-medium pr-2 flex-1 mb-2", 'text-card-foreground')}>{item.activity}</p>
-        <div className="flex flex-wrap gap-1 mb-2">
-            {item.category === 'project' && <Badge variant='secondary'>Projeto</Badge>}
-            {category && <Badge style={{ backgroundColor: category.color, color: 'white' }}>{category.name}</Badge>}
+<CardContent className="p-4 pt-5 flex-grow flex flex-col min-h-[180px]">
+  {/* Título com melhor tipografia */}
+  <div className="flex items-start justify-between mb-3">
+    <div className="flex-1 min-w-0">
+      <h3 className="font-semibold text-foreground text-base leading-tight mb-1 pr-2 line-clamp-2">
+        {item.activity}
+      </h3>
+      {item.deadline && (
+        <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+          <CalendarIcon className="h-3 w-3" />
+          {new Date(item.deadline).toLocaleDateString('pt-BR', { 
+            day: '2-digit', 
+            month: 'short' 
+          })}
+        </p>
+      )}
+    </div>
+  </div>
+  
+  {/* Badges com melhor design */}
+  <div className="flex flex-wrap gap-2 mb-4">
+    <div 
+      className={cn(
+        "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold shadow-sm bg-gray-500 text-white"
+      )}
+    >
+
+      {item.category === 'project' ? 'Projeto' : item.category === 'task' ? 'Tarefa' : item.category}
+    </div>
+    {category && (
+      <div 
+        className={cn(
+          "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white font-semibold shadow-sm",
+          getContrastColor(category.color)
+        )}
+        style={{ backgroundColor: category.color }}
+      >
+        <div className="w-1.5 h-1.5 rounded-full bg-current opacity-70" />
+        {category.name}
+      </div>
+    )}
+  </div>
+  
+  {/* Descrição se houver */}
+  {item.description && (
+    <div className="mb-4 flex-grow">
+      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+        {item.description}
+      </p>
+    </div>
+  )}
+  
+  {/* Footer com melhor separação visual */}
+  <div className="mt-auto pt-4 border-t border-border/40">
+    <div className="flex items-center justify-between gap-2">
+      {/* Score com design melhorado */}
+      <div className="flex items-center gap-2">
+        <div 
+          className={cn(
+            "inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg text-white shadow-sm",
+            getPriorityColor()
+          )}
+        >
+          <span className="text-[10px] opacity-80">GUT</span>
+          <span>{Math.round(item.score)}</span>
         </div>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className={cn("text-xs font-mono", 'text-muted-foreground')}>
-              {Math.round(item.score)} pts
-            </span>
-            {item.category === 'project' && (
-              <PDCADialog item={item}>
-                <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0">
-                  <Rocket className="h-4 w-4" />
-                  <span className="sr-only">Executar Projeto</span>
-                </Button>
-              </PDCADialog>
-            )}
-          </div>
-          <div className="flex items-center">
-            <EditBacklogItemDialog item={item} onUpdateItem={onUpdateItem} />
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={cn("h-6 w-6 shrink-0 text-destructive hover:text-destructive")}
-                >
-                  <Trash2 className="h-4 w-4" />
-                  <span className="sr-only">Excluir</span>
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Esta ação não pode ser desfeita. Isso excluirá
-                    permanentemente o item.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => onDeleteItem(item.id)}>
-                    Continuar
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        </div>
-      </CardContent>
+        {item.category === 'project' && (
+          <PDCADialog item={item}>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 p-0 text-project hover:text-project hover:bg-project/10 transition-colors"
+              title="Executar Projeto"
+            >
+              <Rocket className="h-4 w-4" />
+              <span className="sr-only">Executar Projeto</span>
+            </Button>
+          </PDCADialog>
+        )}
+      </div>
+      
+      {/* Botões de ação com melhor agrupamento */}
+      <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
+        <EditBacklogItemDialog item={item} onUpdateItem={onUpdateItem} />
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+              title="Excluir item"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span className="sr-only">Excluir</span>
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta ação não pode ser desfeita. Isso excluirá
+                permanentemente o item "{item.activity}".
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={() => onDeleteItem(item.id)}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    </div>
+  </div>
+</CardContent>
+
     </Card>
   );
 }

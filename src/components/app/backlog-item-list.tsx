@@ -32,19 +32,21 @@ export function BacklogItemList({ items, onUpdateItem, onDeleteItem, onConvertTo
     }
 
     return (
-      <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/50 p-12 text-center">
-        <h3 className="text-xl font-bold tracking-tight text-foreground">
-            {title}
-        </h3>
-        <p className="text-sm text-muted-foreground mt-2">
-          {message}
-        </p>
+      <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-card p-12 text-center shadow-sm">
+        <div className="mx-auto max-w-sm">
+          <h3 className="text-xl font-bold tracking-tight text-foreground mb-2">
+              {title}
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            {message}
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {items.map((item) => {
         const category = categories.find(c => c.id === item.categoryId);
         return (

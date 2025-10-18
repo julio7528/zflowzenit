@@ -71,6 +71,7 @@ export function NewBacklogItemDialog({ onAddItem, open: controlledOpen, onOpenCh
   const [tendency, setTendency] = useState(5);
   const [animationDirection, setAnimationDirection] = useState<AnimationDirection>('none');
   const [contentHeight, setContentHeight] = useState<number | 'auto'>('auto');
+  const [deadlineTime, setDeadlineTime] = useState('');
 
   // Category state
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(defaultCategoryId || null);
@@ -125,6 +126,7 @@ export function NewBacklogItemDialog({ onAddItem, open: controlledOpen, onOpenCh
     setIsCreatingCategory(false);
     setNewCategoryName('');
     setNewCategoryColor(colorPalette[0]);
+    setDeadlineTime('');
   };
 
   const handleOpenChange = (isOpen: boolean) => {
@@ -225,6 +227,88 @@ export function NewBacklogItemDialog({ onAddItem, open: controlledOpen, onOpenCh
   }
 
   const MAX_CHARS = 1000;
+
+  // Rótulos descritivos da matriz GUT (escala de 1 a 10)
+  const GRAVITY_LABELS = [
+    '',
+    'Nenhuma gravidade',
+    'Muito baixa',
+    'Baixa',
+    'Moderada',
+    'Relevante',
+    'Alta',
+    'Muito alta',
+    'Crítica',
+    'Muito crítica',
+    'Extremamente crítica'
+  ];
+  const GRAVITY_DESCRIPTIONS = [
+    '',
+    'Não causa impacto perceptível.',
+    'Impacto mínimo e isolado.',
+    'Pequeno prejuízo local, fácil de corrigir.',
+    'Afeta resultados pontuais, mas controláveis.',
+    'Prejuízo financeiro ou operacional considerável.',
+    'Afeta mais de um processo ou equipe.',
+    'Pode interromper parcialmente atividades importantes.',
+    'Compromete metas e resultados significativos.',
+    'Causa perdas severas, financeiras ou de imagem.',
+    'Ameaça a sobrevivência da operação ou negócio.'
+  ];
+
+  const URGENCY_LABELS = [
+    '',
+    'Pode esperar',
+    'Muito baixa',
+    'Baixa',
+    'Moderada',
+    'Relevante',
+    'Alta',
+    'Muito alta',
+    'Crítica',
+    'Muito crítica',
+    'Extremamente crítica'
+  ];
+  const URGENCY_DESCRIPTIONS = [
+    '',
+    'Pode ser resolvido a longo prazo, sem impacto.',
+    'Pode ser tratado eventualmente.',
+    'Deve ser observado em breve.',
+    'Precisa de solução no médio prazo.',
+    'Requer ação em semanas.',
+    'Necessário agir em poucos dias.',
+    'Demanda resposta imediata nesta semana.',
+    'Exige ação nas próximas 24 horas.',
+    'Ação necessária nas próximas horas.',
+    'Requer ação imediata — não pode esperar.'
+  ];
+
+  const TENDENCY_LABELS = [
+    '',
+    'Estável',
+    'Muito baixa',
+    'Baixa',
+    'Moderada',
+    'Relevante',
+    'Alta',
+    'Muito alta',
+    'Crítica',
+    'Muito crítica',
+    'Extremamente crítica'
+  ];
+  const TENDENCY_DESCRIPTIONS = [
+    '',
+    'Não apresenta sinais de piora.',
+    'Pode se agravar apenas a longo prazo.',
+    'Leve risco de piora no futuro distante.',
+    'Tende a piorar lentamente.',
+    'Mostra sinais de crescimento gradual.',
+    'Deve piorar perceptivelmente a médio prazo.',
+    'Piora rapidamente em semanas.',
+    'Piora em questão de dias.',
+    'Pode sair de controle em horas.',
+    'Já está agravando e exige ação imediata.'
+  ];
 
   const renderStepContent = (currentStep: number) => {
     const stepClasses = cn(
@@ -454,31 +538,7 @@ export function NewBacklogItemDialog({ onAddItem, open: controlledOpen, onOpenCh
               <DialogDescription>Defina um prazo para a entrega deste item.</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <Label>Prazo</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={cn(
-                      "justify-start text-left font-normal",
-                      !deadline && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {deadline ? format(deadline, 'PPP', { locale: ptBR }) : <span>Escolha uma data</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={deadline || undefined}
-                    onSelect={(date) => setDeadline(date || null)}
-                    initialFocus
-                    locale={ptBR}
-                  />
-                </PopoverContent>
-              </Popover>
-              <Label>Data de Início (Opcional)</Label>
+              <Label>Data de início (opcional)</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -502,10 +562,62 @@ export function NewBacklogItemDialog({ onAddItem, open: controlledOpen, onOpenCh
                   />
                 </PopoverContent>
               </Popover>
+              <Label>Prazo final (obrigatório)</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "justify-start text-left font-normal",
+                      !deadline && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {deadline ? (
+                      deadlineTime ? `${format(deadline, 'PPP', { locale: ptBR })} ${deadlineTime}` : format(deadline, 'PPP', { locale: ptBR })
+                    ) : <span>Escolha uma data</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={deadline || undefined}
+                    onSelect={(date) => {
+                      const newDeadline = date || null;
+                      if (newDeadline && deadlineTime) {
+                        const [hours, minutes] = deadlineTime.split(':').map(Number);
+                        newDeadline.setHours(hours || 0, minutes || 0, 0, 0);
+                      }
+                      setDeadline(newDeadline);
+                    }}
+                    initialFocus
+                    locale={ptBR}
+                  />
+                  <div className="p-2 border-t">
+                    <Input 
+                      type="time" 
+                      value={deadlineTime}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setDeadlineTime(value);
+                        if (deadline) {
+                          const [hours, minutes] = value.split(':').map(Number);
+                          setDeadline(prev => {
+                            const newDate = prev ? new Date(prev) : new Date();
+                            newDate.setHours(hours || 0, minutes || 0);
+                            return newDate;
+                          });
+                        }
+                      }}
+                      disabled={!deadline}
+                    />
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
             <DialogFooter className={footerClasses}>
               <Button variant="outline" className="mr-auto" onClick={() => navigateToStep(5)}>Voltar</Button>
-              <Button onClick={() => handleCategorize('task')}>Confirmar Agendamento</Button>
+              <Button onClick={() => handleCategorize('task')} disabled={!deadline || !deadlineTime}>Confirmar Agendamento</Button>
             </DialogFooter>
           </div>
         );
@@ -520,7 +632,7 @@ export function NewBacklogItemDialog({ onAddItem, open: controlledOpen, onOpenCh
             </DialogHeader>
             <div className="grid gap-6 py-4">
               <div className="space-y-2">
-                <Label>Gravidade: {gravity}</Label>
+                <Label>Gravidade: {gravity} - {GRAVITY_LABELS[gravity]} ({GRAVITY_DESCRIPTIONS[gravity]})</Label>
                 <Slider
                   value={[gravity]}
                   onValueChange={(value) => setGravity(value[0])}
@@ -532,7 +644,7 @@ export function NewBacklogItemDialog({ onAddItem, open: controlledOpen, onOpenCh
                 <p className="text-xs text-muted-foreground">Qual o impacto se não for resolvido?</p>
               </div>
               <div className="space-y-2">
-                <Label>Urgência: {urgency}</Label>
+                <Label>Urgência: {urgency} - {URGENCY_LABELS[urgency]} ({URGENCY_DESCRIPTIONS[urgency]})</Label>
                 <Slider
                   value={[urgency]}
                   onValueChange={(value) => setUrgency(value[0])}
@@ -544,7 +656,7 @@ export function NewBacklogItemDialog({ onAddItem, open: controlledOpen, onOpenCh
                 <p className="text-xs text-muted-foreground">Quão rápido precisa ser resolvido?</p>
               </div>
               <div className="space-y-2">
-                <Label>Tendência: {tendency}</Label>
+                <Label>Tendência: {tendency} - {TENDENCY_LABELS[tendency]} ({TENDENCY_DESCRIPTIONS[tendency]})</Label>
                 <Slider
                   value={[tendency]}
                   onValueChange={(value) => setTendency(value[0])}
