@@ -4,6 +4,7 @@ import { Header } from '@/components/app/header';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from './app-sidebar';
+import { FloatingActionButton } from './floating-action-button';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -20,6 +21,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             {children}
           </main>
         </SidebarInset>
+        <FloatingActionButton />
       </SidebarProvider>
     </ProtectedRoute>
   );

@@ -7,7 +7,7 @@ import { BacklogItem } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { addDays, addMonths, addWeeks, eachDayOfInterval, endOfMonth, endOfWeek, format, isPast, isSameDay, isSameMonth, isWithinInterval, parseISO, startOfDay, startOfMonth, startOfWeek, subDays, subMonths, subWeeks } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { AlertCircle, Briefcase, Calendar as CalendarIcon, CheckCircle2, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
+import { AlertCircle, Briefcase, Calendar as CalendarIcon, CheckCircle2, ChevronLeft, ChevronRight, Clock, LayoutDashboard, List } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from "next/navigation";
 
@@ -18,6 +18,7 @@ export function CalendarContent() {
   const router = useRouter();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<ViewType>('week');
+  const [dayViewMode, setDayViewMode] = useState<'grid' | 'list'>('grid');
 
   // Filter items that have deadline or start date
   const calendarItems = items.filter(item => item.deadline || item.startDate);
@@ -34,6 +35,11 @@ export function CalendarContent() {
 
   const goToToday = () => {
     setCurrentDate(new Date());
+  };
+
+  const handleDateClick = (date: Date) => {
+    setCurrentDate(date);
+    setView('day');
   };
 
   // Helper function to parse date consistently
@@ -207,7 +213,10 @@ export function CalendarContent() {
             {format(currentDate, 'dd \'de\' MMMM \'de\' yyyy', { locale: ptBR })}
           </p>
         </div>
-        <div className="grid gap-4 max-w-4xl mx-auto">
+        <div className={cn(
+          "gap-4 mx-auto",
+          dayViewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3" : "flex flex-col max-w-4xl"
+        )}>
           {dayItems.length > 0 ? (
             dayItems.map(item => {
               const isCompleted = item.status === 'done';
@@ -217,22 +226,30 @@ export function CalendarContent() {
               return (
                 <Card
                   key={item.id}
-                  onClick={() => router.push(`/edit/${item.id}`)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    router.push(`/edit/${item.id}`);
+                  }}
                   className={cn(
                     'shadow-sm hover:shadow-md transition-all duration-200 group relative cursor-pointer border bg-card rounded-xl overflow-hidden flex flex-col',
                     isCompleted ? 'border-green-500/50 bg-green-50/30' : '',
-                    !isCompleted && isOverdue ? 'border-destructive/50 bg-destructive/5' : 'hover:border-border/50'
+                    !isCompleted && isOverdue ? 'border-destructive/50 bg-destructive/5' : 'hover:border-border/50',
+                    dayViewMode === 'list' ? 'flex-row min-h-[120px]' : 'min-h-[180px]'
                   )}
                 >
                   <div
                     className={cn(
-                      'absolute top-0 left-0 right-0 h-1',
+                      'absolute top-0 left-0 bottom-0 w-1 md:w-1 md:h-full',
+                      dayViewMode === 'grid' ? 'h-1 w-full top-0 left-0 right-0 bottom-auto' : 'w-1 h-full top-0 left-0 bottom-0',
                       isCompleted ? 'bg-green-500' : isOverdue ? 'bg-destructive' : getPriorityColor(item.score || 0)
                     )}
                   />
-                  <CardContent className="p-4 pt-5 flex-grow flex flex-col min-h-[180px]">
+                  <CardContent className={cn(
+                    "p-4 flex-grow flex flex-col",
+                    dayViewMode === 'grid' ? "pt-5" : "pl-6"
+                  )}>
                     {/* Título com melhor tipografia */}
-                    <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-start justify-between mb-2">
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-foreground text-base leading-tight mb-1 pr-2 line-clamp-2">
                           {item.activity}
@@ -250,7 +267,7 @@ export function CalendarContent() {
                     </div>
                     
                     {/* Badges com design idêntico ao Kanban */}
-                    <div className="flex flex-wrap gap-2 mb-4">
+                    <div className="flex flex-wrap gap-2 mb-3">
                       <div 
                         className={cn(
                           "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm",
@@ -276,7 +293,7 @@ export function CalendarContent() {
                     </div>
                     
                     {/* Descrição se houver */}
-                    {item.description && (
+                    {item.description && dayViewMode === 'grid' && (
                       <div className="mb-4 flex-grow">
                         <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
                           {item.description}
@@ -285,7 +302,7 @@ export function CalendarContent() {
                     )}
                     
                     {/* Footer com melhor separação visual */}
-                    <div className="mt-auto pt-4 border-t border-border/40">
+                    <div className="mt-auto pt-3 border-t border-border/40">
                       <div className="flex items-center justify-between gap-2">
                         {/* Score com design melhorado */}
                         <div className="flex items-center gap-2">
@@ -306,7 +323,7 @@ export function CalendarContent() {
               );
             })
           ) : (
-            <div className="text-center py-16">
+            <div className="text-center py-16 col-span-full">
               <CalendarIcon className="h-16 w-16 text-slate-300 mx-auto mb-4" />
               <p className="text-lg text-slate-500 mb-2">Nenhum item agendado para este dia</p>
               <p className="text-sm text-slate-400">Aproveite para relaxar ou planejar suas próximas atividades</p>
@@ -339,7 +356,10 @@ export function CalendarContent() {
                 'shadow-sm hover:shadow-md transition-all duration-200 border bg-card rounded-xl overflow-hidden flex flex-col min-h-[200px]',
                 isToday ? 'ring-2 ring-blue-500 bg-blue-50/50 border-blue-200' : 'border-border/50 hover:border-border/70'
               )}>
-                <div className="text-center p-4 border-b border-border/40">
+                <div 
+                  className="text-center p-4 border-b border-border/40 cursor-pointer hover:bg-slate-50 transition-colors"
+                  onClick={() => handleDateClick(day)}
+                >
                   <div className={cn(
                     'text-sm font-semibold uppercase tracking-wide mb-1',
                     isToday ? 'text-blue-700' : 'text-muted-foreground'
@@ -360,9 +380,12 @@ export function CalendarContent() {
                     const category = categories.find(c => c.id === item.categoryId);
                     
                     return (
-                      <div
-                         key={item.id}
-                         onClick={() => router.push(`/edit/${item.id}`)}
+                       <div
+                          key={item.id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/edit/${item.id}`);
+                          }}
                          className={cn(
                            'relative rounded-lg p-2 text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-md cursor-pointer border overflow-hidden',
                            isCompleted ? 'border-green-500/50 bg-green-50/30' : '',
@@ -442,8 +465,9 @@ export function CalendarContent() {
               return (
                 <div 
                   key={day.toISOString()} 
+                  onClick={() => handleDateClick(day)}
                   className={cn(
-                    'min-h-[120px] p-3 border-r border-b border-border/50 last:border-r-0 transition-colors hover:bg-muted/20',
+                    'min-h-[120px] p-3 border-r border-b border-border/50 last:border-r-0 transition-colors hover:bg-muted/20 cursor-pointer',
                     !isCurrentMonth && 'bg-muted/10 opacity-60',
                     isToday && 'bg-blue-50 border-blue-200 ring-1 ring-blue-200'
                   )}
@@ -462,7 +486,10 @@ export function CalendarContent() {
                       return (
                         <div
                            key={item.id}
-                           onClick={() => router.push(`/edit/${item.id}`)}
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             router.push(`/edit/${item.id}`);
+                           }}
                            className={cn(
                              'relative text-xs p-1.5 rounded-lg font-medium truncate cursor-pointer transition-all duration-200 hover:shadow-md border overflow-hidden',
                              isCompleted ? 'border-green-500/50 bg-green-50/30' : '',
@@ -594,6 +621,34 @@ export function CalendarContent() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {view === 'day' && (
+              <div className="flex gap-1 bg-white rounded-lg p-1 shadow-sm border border-slate-200 mr-2">
+                <Button 
+                  variant={dayViewMode === 'grid' ? 'default' : 'ghost'} 
+                  size="sm"
+                  onClick={() => setDayViewMode('grid')}
+                  className={cn(
+                    'h-8 px-2 transition-all duration-200',
+                    dayViewMode === 'grid' ? 'bg-blue-500 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  )}
+                  title="Visualização em Grade"
+                >
+                  <LayoutDashboard className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant={dayViewMode === 'list' ? 'default' : 'ghost'} 
+                  size="sm"
+                  onClick={() => setDayViewMode('list')}
+                  className={cn(
+                    'h-8 px-2 transition-all duration-200',
+                    dayViewMode === 'list' ? 'bg-blue-500 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  )}
+                  title="Visualização em Lista"
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
             <Button 
               variant="outline" 
               onClick={goToToday}

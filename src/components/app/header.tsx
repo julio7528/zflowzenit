@@ -14,10 +14,14 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
+import { usePathname } from 'next/navigation';
+import { useGlobalLoading } from '@/components/providers/global-loading-provider';
 
 export function Header() {
   const { toggleSidebar, state } = useSidebar();
   const { user, signOut } = useAuth();
+  const { setIsLoading } = useGlobalLoading();
+  const pathname = usePathname();
 
   const handleSignOut = async () => {
     await signOut();
@@ -59,13 +63,13 @@ export function Header() {
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
-            <Link href="/profile">Perfil</Link>
+            <Link href="/profile" onClick={() => { if (pathname !== '/profile') setIsLoading(true); }}>Perfil</Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href="/billing">Faturamento</Link>
+            <Link href="/billing" onClick={() => { if (pathname !== '/billing') setIsLoading(true); }}>Faturamento</Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href="/settings">Configurações</Link>
+            <Link href="/settings" onClick={() => { if (pathname !== '/settings') setIsLoading(true); }}>Configurações</Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">

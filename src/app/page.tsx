@@ -22,8 +22,10 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { Logo } from '@/components/app/logo';
+import { useGlobalLoading } from '@/components/providers/global-loading-provider';
 
 export default function LandingPage() {
+  const { setIsLoading } = useGlobalLoading();
   const features = [
     {
       icon: <Target className="h-8 w-8" />,
@@ -111,10 +113,10 @@ export default function LandingPage() {
               Open Source
             </Link>
             <Button asChild variant="outline">
-              <Link href="/login">Entrar</Link>
+              <Link href="/login" onClick={() => setIsLoading(true)}>Entrar</Link>
             </Button>
             <Button asChild className="bg-[#7EC4CF] hover:bg-[#66A5AD]">
-              <Link href="/login">Começar Gratuitamente</Link>
+              <Link href="/login" onClick={() => setIsLoading(true)}>Começar Gratuitamente</Link>
             </Button>
           </nav>
         </div>
@@ -134,13 +136,13 @@ export default function LandingPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild size="lg" className="bg-[#7EC4CF] hover:bg-[#66A5AD] text-lg px-8 py-6">
-              <Link href="/login">
+              <Link href="/login" onClick={() => setIsLoading(true)}>
                 Começar Gratuitamente
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="text-lg px-8 py-6">
-              <Link href="#demo">
+              <Link href="/demonstracao" onClick={() => setIsLoading(true)}>
                 <Play className="mr-2 h-5 w-5" />
                 Ver Demonstração
               </Link>
@@ -317,7 +319,7 @@ export default function LandingPage() {
                 </Link>
               </Button>
               <Button asChild size="lg" className="bg-[#7EC4CF] hover:bg-[#66A5AD] text-lg px-8 py-6">
-                <Link href="/login">
+                <Link href="/login" onClick={() => setIsLoading(true)}>
                   Começar a Usar
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
@@ -343,8 +345,8 @@ export default function LandingPage() {
               <h3 className="font-semibold mb-4">Produto</h3>
               <ul className="space-y-2 text-sm text-gray-400">
                 <li><Link href="#features" className="hover:text-white transition-colors">Funcionalidades</Link></li>
-                <li><Link href="/login" className="hover:text-white transition-colors">Dashboard</Link></li>
-                <li><Link href="/documentation" className="hover:text-white transition-colors">Documentação</Link></li>
+                <li><Link href="/login" className="hover:text-white transition-colors" onClick={() => setIsLoading(true)}>Dashboard</Link></li>
+                <li><Link href="/documentation" className="hover:text-white transition-colors" onClick={() => setIsLoading(true)}>Documentação</Link></li>
               </ul>
             </div>
             <div>

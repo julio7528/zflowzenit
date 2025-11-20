@@ -111,13 +111,16 @@ export function useSupabaseDemands() {
 
       // Handle authentication error specifically
       if (settingsError) {
-        if (isAuthError(settingsError)) {
-          console.error('Authentication error while loading settings:', settingsError);
-          await signOut();
-          return;
+        // Ignore "Row not found" error (PGRST116) as we will create default settings
+        if (settingsError.code !== 'PGRST116') {
+          if (isAuthError(settingsError)) {
+            console.error('Authentication error while loading settings:', settingsError);
+            await signOut();
+            return;
+          }
+          // For non-auth errors, just log them but continue
+          console.error('Error loading settings:', settingsError);
         }
-        // For non-auth errors, just log them but continue
-        console.error('Error loading settings:', settingsError);
       }
 
       if (settingsData) {
@@ -133,6 +136,7 @@ export function useSupabaseDemands() {
           });
         
         if (insertError) {
+          // If insert fails, it might be RLS. Log it clearly.
           console.error('Error inserting default settings:', insertError);
         }
       }

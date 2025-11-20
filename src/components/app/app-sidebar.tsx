@@ -10,16 +10,23 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { Activity, BookMarked, Calendar1, Columns3, FileText, History, LayoutDashboard, Users } from 'lucide-react';
+import { useGlobalLoading } from '@/components/providers/global-loading-provider';
+import { Activity, BookMarked, Calendar1, Columns3, FileText, History, LayoutDashboard, ListTodo, Users } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const menuItems = [
   {
-    title: 'Backlog',
+    title: 'Dashboard',
     href: '/dashboard',
     icon: LayoutDashboard,
-    tooltip: 'Backlog'
+    tooltip: 'Dashboard - Visão Geral'
+  },
+  {
+    title: 'Backlog',
+    href: '/backlog',
+    icon: ListTodo,
+    tooltip: 'Caixa de Entrada de Backlog'
   },
   {
     title: 'Kanban',
@@ -67,6 +74,7 @@ const menuItems = [
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const { setIsLoading } = useGlobalLoading();
 
   return (
     <Sidebar collapsible="icon">
@@ -83,7 +91,14 @@ export function AppSidebar() {
               return (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton asChild tooltip={item.tooltip} isActive={isActive}>
-                    <Link href={item.href}>
+                    <Link 
+                      href={item.href}
+                      onClick={() => {
+                        if (!isActive) {
+                          setIsLoading(true);
+                        }
+                      }}
+                    >
                       <Icon />
                       <span>{item.title}</span>
                     </Link>

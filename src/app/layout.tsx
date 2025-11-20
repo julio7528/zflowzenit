@@ -1,5 +1,6 @@
 import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/hooks/use-auth';
+import { GlobalLoadingProvider } from '@/components/providers/global-loading-provider';
 import { cn } from '@/lib/utils';
 import type { Metadata } from 'next';
 import './globals.css';
@@ -23,7 +24,9 @@ export default function RootLayout({
       </head>
       <body className={cn('font-body antialiased min-h-screen')}>
         <AuthProvider>
-          {children}
+          <GlobalLoadingProvider>
+            {children}
+          </GlobalLoadingProvider>
         </AuthProvider>
         <Toaster />
       </body>
