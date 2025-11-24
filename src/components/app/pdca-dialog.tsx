@@ -32,7 +32,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 import { Alert, AlertTitle, AlertDescription } from '../ui/alert';
-import { NewBacklogItemDialog } from './new-backlog-item-dialog';
+import { NewBacklogItemDialog } from './new-demand-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { cn } from '@/lib/utils';
@@ -701,6 +701,7 @@ export function PDCADialog({ item, children }: PDCADialogProps) {
                 categories={categories}
                 onAddCategory={addCategory}
                 onDeleteCategory={deleteCategory}
+                hideTrigger={true}
             />
         )}
       </DialogContent>

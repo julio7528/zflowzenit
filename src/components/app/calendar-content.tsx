@@ -166,7 +166,7 @@ export function CalendarContent() {
   };
 
   const getCategoryBgTint = (category?: string): string => {
-    const base = getCategoryColor(category);
+    const base = getCategoryColor(category || '');
     // Usa uma tonalidade leve para melhorar leitura
     return base + '/10';
   };
@@ -293,10 +293,10 @@ export function CalendarContent() {
                     </div>
                     
                     {/* Descrição se houver */}
-                    {item.description && dayViewMode === 'grid' && (
+                    {item.details && dayViewMode === 'grid' && (
                       <div className="mb-4 flex-grow">
                         <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                          {item.description}
+                          {item.details}
                         </p>
                       </div>
                     )}

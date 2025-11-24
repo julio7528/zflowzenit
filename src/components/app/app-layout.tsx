@@ -5,6 +5,7 @@ import { ProtectedRoute } from '@/components/auth/protected-route';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from './app-sidebar';
 import { FloatingActionButton } from './floating-action-button';
+import { DemandsProvider } from '@/context/demands-context';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -13,16 +14,18 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps) {
   return (
     <ProtectedRoute>
-      <SidebarProvider>
-        <AppSidebar />
-        <SidebarInset>
-          <Header />
-          <main className="p-4 sm:p-6 lg:p-8">
-            {children}
-          </main>
-        </SidebarInset>
-        <FloatingActionButton />
-      </SidebarProvider>
+      <DemandsProvider>
+        <SidebarProvider>
+          <AppSidebar />
+          <SidebarInset>
+            <Header />
+            <main className="p-4 sm:p-6 lg:p-8">
+              {children}
+            </main>
+          </SidebarInset>
+          <FloatingActionButton />
+        </SidebarProvider>
+      </DemandsProvider>
     </ProtectedRoute>
   );
 }

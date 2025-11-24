@@ -16,11 +16,13 @@ import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import { usePathname } from 'next/navigation';
 import { useGlobalLoading } from '@/components/providers/global-loading-provider';
+import { useSupabaseDemands } from '@/hooks/use-supabase-demands';
 
 export function Header() {
   const { toggleSidebar, state } = useSidebar();
   const { user, signOut } = useAuth();
   const { setIsLoading } = useGlobalLoading();
+  const { settings } = useSupabaseDemands();
   const pathname = usePathname();
 
   const handleSignOut = async () => {
@@ -45,7 +47,7 @@ export function Header() {
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="relative h-10 w-10 rounded-full ring-1 ring-border hover:ring-primary">
             <Avatar className="h-8 w-8">
-              <AvatarImage src={user?.user_metadata?.avatar_url || "https://i.pravatar.cc/150?u=a042581f4e29026704d"} alt="@user" />
+              <AvatarImage src={settings?.avatarUrl || user?.user_metadata?.avatar_url} alt="@user" />
               <AvatarFallback className="text-xs">{user?.email?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
             </Avatar>
           </Button>

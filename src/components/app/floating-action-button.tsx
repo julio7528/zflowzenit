@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { NewBacklogItemDialog } from '@/components/app/new-backlog-item-dialog';
+import { NewBacklogItemDialog } from '@/components/app/new-demand-dialog';
 import { useSupabaseDemands } from '@/hooks/use-supabase-demands';
 import { cn } from '@/lib/utils';
 
@@ -39,6 +39,7 @@ export function FloatingActionButton() {
         categories={categories}
         onAddCategory={addCategory}
         onDeleteCategory={deleteCategory}
+        hideTrigger={true}
       />
     </>
   );

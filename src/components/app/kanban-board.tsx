@@ -378,10 +378,10 @@ function KanbanCard({
   </div>
   
   {/* Descrição se houver */}
-  {item.description && (
+  {item.details && (
     <div className="mb-4 flex-grow">
       <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-        {item.description}
+        {item.details}
       </p>
     </div>
   )}

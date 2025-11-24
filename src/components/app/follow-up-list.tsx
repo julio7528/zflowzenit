@@ -4,15 +4,20 @@ import { useSupabaseDemands } from '@/hooks/use-supabase-demands';
 import { useState, useMemo } from 'react';
 import type { BacklogItem } from '@/lib/types';
 import { BacklogItemList } from './backlog-item-list';
-import { NewBacklogItemDialog } from '@/components/app/new-backlog-item-dialog';
 import { SortSettingsDialog } from './sort-settings-dialog';
+import { NewBacklogItemDialog } from './new-demand-dialog';
 
 type SortOrder = 'createdAt' | 'alphabetical';
 
 export function FollowUpList() {
-  const { items, updateItem, addItem, deleteItem, categories, addCategory, deleteCategory, isLoaded } = useSupabaseDemands();
-  const [convertingItem, setConvertingItem] = useState<BacklogItem | null>(null);
+  const { items, updateItem, deleteItem, categories, addItem } = useSupabaseDemands();
   const [sortBy, setSortBy] = useState<SortOrder>('createdAt');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [prefilledData, setPrefilledData] = useState<{
+    activity: string;
+    details?: string;
+    categoryId?: string | null;
+  } | null>(null);
 
   const followUpItems = items.filter((item) => item.category === 'future');
 
@@ -26,19 +31,22 @@ export function FollowUpList() {
     });
   }, [followUpItems, sortBy]);
 
-  const handleConvertToTask = (id: string) => {
-    const itemToConvert = items.find((item) => item.id === id);
-    if (itemToConvert) {
-      setConvertingItem(itemToConvert);
-    }
-  };
+  const handleConvertToBacklog = async (itemId: string) => {
+    const itemToConvert = items.find(item => item.id === itemId);
+    if (!itemToConvert) return;
 
-  const handleFinishConversion = (newItem: Omit<BacklogItem, 'id' | 'score' | 'createdAt'>) => {
-    if (convertingItem) {
-      addItem(newItem);
-      deleteItem(convertingItem.id);
-      setConvertingItem(null);
-    }
+    // Pre-fill dialog data
+    setPrefilledData({
+      activity: itemToConvert.activity,
+      details: itemToConvert.details,
+      categoryId: itemToConvert.categoryId,
+    });
+
+    // Delete the follow-up item
+    await deleteItem(itemId);
+
+    // Open the dialog
+    setIsDialogOpen(true);
   };
 
   return (
@@ -50,7 +58,7 @@ export function FollowUpList() {
             Sua lista de itens para acompanhamento futuro.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+       <div className="flex items-center gap-2">
           <SortSettingsDialog sortBy={sortBy} onSortChange={setSortBy} />
         </div>
       </div>
@@ -58,23 +66,23 @@ export function FollowUpList() {
         items={sortedFollowUpItems}
         onUpdateItem={updateItem}
         onDeleteItem={deleteItem}
-        onConvertToTask={handleConvertToTask}
+        onConvertToTask={handleConvertToBacklog}
         categories={categories}
         pageType="follow-up"
       />
-      {convertingItem && (
-        <NewBacklogItemDialog
-          open={!!convertingItem}
-          onOpenChange={(isOpen) => !isOpen && setConvertingItem(null)}
-          onAddItem={handleFinishConversion}
-          defaultActivity={convertingItem.activity}
-          defaultDetails={convertingItem.details}
-          defaultCategoryId={convertingItem.categoryId}
-          categories={categories}
-          onAddCategory={addCategory}
-          onDeleteCategory={deleteCategory}
-        />
-      )}
+      
+      <NewBacklogItemDialog
+        onAddItem={addItem}
+        categories={categories}
+        onAddCategory={async () => null}
+        onDeleteCategory={async () => {}}
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        hideTrigger={true}
+        defaultActivity={prefilledData?.activity}
+        defaultDetails={prefilledData?.details}
+        defaultCategoryId={prefilledData?.categoryId}
+      />
     </div>
   );
 }

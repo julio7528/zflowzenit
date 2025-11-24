@@ -11,7 +11,7 @@ import { SettingsDialog } from './settings-dialog';
 type SortKey = 'score_desc' | 'score_asc' | 'deadline_asc' | 'deadline_desc';
 
 export function Dashboard() {
-  const { items, addItem, updateItem, deleteItem, categories, settings, setSettings, isLoaded } = useSupabaseDemands();
+  const { items, addItem, updateItem, deleteItem, categories, settings, setSettings, isLoaded, addCategory, deleteCategory } = useSupabaseDemands();
   const [currentSort, setCurrentSort] = useState<SortKey>('score_desc');
 
   const handleSortChange = (key: SortKey) => {
@@ -35,7 +35,6 @@ export function Dashboard() {
               onSortChange={handleSortChange}
               currentSort={currentSort}
             />
-            <NewBacklogItemDialog onAddItem={addItem} />
           </div>
         </div>
         <BacklogItemList 

@@ -93,6 +93,7 @@ export interface BacklogItem {
   createdAt: Date;
   categoryId?: string | null;
   pdcaAnalysis?: Partial<PDCAAnalysis>;
+  googleCalendarEventId?: string | null;
   user_id?: string; // Adicionado para Supabase
 }
 
@@ -112,6 +113,7 @@ export interface SupabaseBacklogItem {
   start_date: string | null;
   category_id: string | null;
   pdca_analysis: any | null;
+  google_calendar_event_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -121,6 +123,7 @@ export interface UserSettings {
   user_id: string;
   k_factor: number;
   b_factor: number;
+  avatar_url?: string | null;
   created_at: string;
   updated_at: string;
 }

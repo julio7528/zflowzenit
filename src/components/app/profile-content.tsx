@@ -19,10 +19,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { User, Mail, Phone, MapPin, Edit, Save, X, Lock, Eye, EyeOff, Shield, KeyRound } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Edit, Save, X, Lock, Eye, EyeOff, Shield, KeyRound, Upload, Link as LinkIcon } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
+import { useSupabaseDemands } from '@/hooks/use-supabase-demands';
 
 export function ProfilePage() {
   const { user } = useAuth();
@@ -35,6 +36,57 @@ export function ProfilePage() {
     location: '',
     bio: '',
   });
+
+  const { settings, setSettings } = useSupabaseDemands();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  useEffect(() => {
+    if (settings?.avatarUrl) {
+      setAvatarUrl(settings.avatarUrl);
+    } else if (user?.user_metadata?.avatar_url) {
+      setAvatarUrl(user.user_metadata.avatar_url);
+    }
+  }, [settings, user]);
+
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      setIsUploading(true);
+      if (!event.target.files || event.target.files.length === 0) {
+        throw new Error('Você deve selecionar uma imagem para upload.');
+      }
+
+      const file = event.target.files[0];
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user?.id}-${Math.random()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
+      
+      setAvatarUrl(data.publicUrl);
+      toast({
+        title: 'Upload concluído',
+        description: 'Imagem carregada com sucesso. Clique em Salvar para confirmar.',
+      });
+      
+    } catch (error: any) {
+      toast({
+        title: 'Erro no upload',
+        description: error.message || 'Erro ao fazer upload da imagem.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   // Password change state
   const [showPasswordForm, setShowPasswordForm] = useState(false);
@@ -68,9 +120,26 @@ export function ProfilePage() {
     }
   }, [user]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     console.log('Saving profile:', formData);
-    setIsEditing(false);
+    
+    try {
+        if (avatarUrl !== settings.avatarUrl) {
+            await setSettings({ ...settings, avatarUrl });
+        }
+        
+        setIsEditing(false);
+        toast({
+            title: 'Perfil atualizado',
+            description: 'Suas informações foram salvas com sucesso.',
+        });
+    } catch (error) {
+        toast({
+            title: 'Erro ao salvar',
+            description: 'Não foi possível salvar as alterações.',
+            variant: 'destructive',
+        });
+    }
   };
 
   const handleCancel = () => {
@@ -248,18 +317,48 @@ export function ProfilePage() {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="flex items-center space-x-6">
-                  <Avatar className="h-24 w-24">
-                    <AvatarImage src={user?.user_metadata?.avatar_url} />
-                    <AvatarFallback className="text-lg">
-                      {formData.name.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="space-y-2">
+                  <div className="relative group">
+                    <Avatar className="h-24 w-24">
+                      <AvatarImage src={avatarUrl || user?.user_metadata?.avatar_url} />
+                      <AvatarFallback className="text-lg">
+                        {formData.name.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    {isEditing && (
+                        <>
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                                <Label htmlFor="avatar-upload" className="cursor-pointer text-white p-2">
+                                    <Upload className="h-6 w-6" />
+                                </Label>
+                                <Input 
+                                    id="avatar-upload" 
+                                    type="file" 
+                                    accept="image/*" 
+                                    className="hidden" 
+                                    onChange={handleAvatarUpload}
+                                    disabled={isUploading}
+                                />
+                            </div>
+                        </>
+                    )}
+                  </div>
+                  <div className="space-y-2 flex-1">
                     <h3 className="text-xl font-semibold">{formData.name}</h3>
                     <Badge variant="secondary">Usuário Ativo</Badge>
                     <p className="text-sm text-muted-foreground">
                       Membro desde {user?.created_at ? new Date(user.created_at).toLocaleDateString('pt-BR') : 'N/A'}
                     </p>
+                    {isEditing && (
+                        <div className="flex items-center gap-2 mt-2">
+                            <LinkIcon className="h-4 w-4 text-muted-foreground" />
+                            <Input 
+                                placeholder="Ou cole uma URL de imagem..." 
+                                value={avatarUrl || ''} 
+                                onChange={(e) => setAvatarUrl(e.target.value)}
+                                className="h-8 text-sm max-w-md"
+                            />
+                        </div>
+                    )}
                   </div>
                 </div>
 

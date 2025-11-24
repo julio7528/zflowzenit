@@ -2,7 +2,7 @@
 
 import { useSupabaseDemands } from '@/hooks/use-supabase-demands';
 import { BacklogItemList } from './backlog-item-list';
-import { NewBacklogItemDialog } from '@/components/app/new-backlog-item-dialog';
+import { NewBacklogItemDialog } from '@/components/app/new-demand-dialog';
 import { SettingsDialog } from './settings-dialog';
 import type { BacklogItem } from '@/lib/types';
 import { useState, useMemo, useCallback } from 'react';
@@ -112,12 +112,6 @@ export function Backlog() {
               </Button>
           )}
           <SettingsDialog settings={settings} setSettings={setSettings} onSortChange={handleSortChange} currentSort={sortOption} />
-          <NewBacklogItemDialog 
-            onAddItem={addItem} 
-            categories={categories}
-            onAddCategory={addCategory}
-            onDeleteCategory={deleteCategory}
-          />
         </div>
       </div>
       <BacklogItemList items={sortedBacklogItems} onUpdateItem={updateItem} onDeleteItem={deleteItem} categories={categories} pageType="backlog" />
