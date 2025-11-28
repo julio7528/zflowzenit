@@ -37,18 +37,13 @@ yarn-error.log*
 next-env.d.ts
 
 # IDE
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-.idea
-*.swp
-*.swo
-*~
+.vscode/
+.idea/
 
-# OS
-Thumbs.db
+# Debug scripts
+debug-*.ts
+create-test-user.ts
+test-*.ts
 
-# Genkit
-.genkit/
+# Backup files
+*.bak
