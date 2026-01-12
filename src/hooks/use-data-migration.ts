@@ -38,7 +38,7 @@ export function useDataMigration() {
       if (itemsError) {
         if (isAuthError(itemsError)) {
           console.error('Authentication error while checking for existing items:', itemsError);
-          await signOut();
+          // await signOut();
           return { success: false, message: 'Sessão expirada, faça login novamente' };
         }
         throw itemsError;

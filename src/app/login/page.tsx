@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { useAuth } from '@/hooks/use-auth'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -16,28 +17,14 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [isSignUp, setIsSignUp] = useState(false)
   const router = useRouter()
+  const { user, loading: authLoading } = useAuth()
 
   useEffect(() => {
-    const checkUser = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession()
-        
-        if (error) {
-          // If there's an error getting session (like invalid refresh token), just continue to login form
-          console.warn('Error getting session, proceeding to login form:', error)
-          return
-        }
-        
-        if (session) {
-          router.push('/dashboard')
-        }
-      } catch (error) {
-        // Handle unexpected errors
-        console.error('Unexpected error checking session:', error)
-      }
+    // Only redirect if auth is not loading and user exists
+    if (!authLoading && user) {
+      router.replace('/dashboard')
     }
-    checkUser()
-  }, [router])
+  }, [user, authLoading, router])
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -52,22 +39,30 @@ export default function LoginPage() {
         if (error) throw error
         alert('Verifique seu email para confirmar a conta!')
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         })
         if (error) throw error
-        // After successful login, redirect to dashboard
-        router.push('/dashboard')
+        
+        // Verify the session was created successfully
+        if (data.session) {
+          console.log('Login successful, session created')
+          // Use replace instead of push to prevent back button issues
+          // Also use a small delay to ensure cookies are set
+          await new Promise(resolve => setTimeout(resolve, 100))
+          router.replace('/dashboard')
+          return
+        }
       }
     } catch (error: any) {
       // Check if it's a refresh token related error message
-      if (error.message.includes('Invalid Refresh Token') || error.message.includes('Refresh Token Not Found')) {
+      if (error.message?.includes('Invalid Refresh Token') || error.message?.includes('Refresh Token Not Found')) {
         // Clear any stored session data that might be causing the issue
         await supabase.auth.signOut()
         alert('Sessão expirada. Por favor, faça login novamente.')
       } else {
-        alert(error.message)
+        alert(error.message || 'Erro ao fazer login')
       }
     } finally {
       setLoading(false)

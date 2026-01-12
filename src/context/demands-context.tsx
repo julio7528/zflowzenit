@@ -12,6 +12,7 @@ import type {
   SupabaseBacklogItem
 } from '@/lib/types';
 import { differenceInHours } from 'date-fns';
+import { useToast } from '@/hooks/use-toast';
 
 // Helper function to check if error is related to authentication/refresh token
 const isAuthError = (error: any): boolean => {
@@ -130,8 +131,8 @@ export function DemandsProvider({ children }: { children: ReactNode }) {
         if (settingsResult.error.code !== 'PGRST116') {
           if (isAuthError(settingsResult.error)) {
             console.error('Authentication error while loading settings:', settingsResult.error);
-            await signOut();
-            return;
+            // await signOut(); // Prevent auto-logout on error to avoid loops
+            // return;
           }
           console.error('Error loading settings:', settingsResult.error);
         } else {
@@ -158,7 +159,12 @@ export function DemandsProvider({ children }: { children: ReactNode }) {
       if (categoriesResult.error) {
         if (isAuthError(categoriesResult.error)) {
           console.error('Authentication error while loading categories:', categoriesResult.error);
-          await signOut();
+          // await signOut();
+          toast({
+            title: "Erro de Autenticação",
+            description: "Não foi possível carregar as categorias.",
+            variant: "destructive"
+          });
           return;
         }
         console.error('Error loading categories:', categoriesResult.error);
@@ -170,7 +176,12 @@ export function DemandsProvider({ children }: { children: ReactNode }) {
       if (itemsResult.error) {
         if (isAuthError(itemsResult.error)) {
           console.error('Authentication error while loading items:', itemsResult.error);
-          await signOut();
+          // await signOut();
+          toast({
+            title: "Erro de Autenticação",
+            description: "Não foi possível carregar os itens.",
+            variant: "destructive"
+          });
           return;
         }
         console.error('Error loading items:', itemsResult.error);
@@ -186,14 +197,19 @@ export function DemandsProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       if (isAuthError(error)) {
         console.error('Authentication error in loadData:', error);
-        await signOut();
-      } else {
-        console.error('Unexpected error loading data:', error);
+        // await signOut(); // Prevent auto-logout on error to avoid loops
+        toast({
+            title: "Erro de Autenticação",
+            description: "Não foi possível carregar os dados. Tente recarregar a página.",
+            variant: "destructive"
+        });
+        return;
       }
+      console.error('Error loading data:', error);
     } finally {
       setIsLoaded(true);
     }
-  }, [user, calculateScore, signOut]);
+  }, [user?.id, calculateScore, signOut]);
 
   // Adicionar item
   const addItem = useCallback(async (newItem: Omit<BacklogItem, 'id' | 'score' | 'createdAt'>) => {
@@ -226,7 +242,12 @@ export function DemandsProvider({ children }: { children: ReactNode }) {
       if (error) {
         if (isAuthError(error)) {
           console.error('Authentication error while adding item:', error);
-          await signOut();
+          // await signOut();
+          toast({
+            title: "Erro de Autenticação",
+            description: "Não foi possível adicionar o item.",
+            variant: "destructive"
+          });
           return;
         }
         console.error('❌ Erro do Supabase:', error);
@@ -244,7 +265,12 @@ export function DemandsProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       if (isAuthError(error)) {
         console.error('Authentication error in addItem:', error);
-        await signOut();
+        // await signOut();
+        toast({
+            title: "Erro de Autenticação",
+            description: "Erro ao tentar adicionar item.",
+            variant: "destructive"
+        });
         return;
       }
       console.error('❌ Erro ao adicionar item:', error);
@@ -294,7 +320,12 @@ export function DemandsProvider({ children }: { children: ReactNode }) {
       if (error) {
         if (isAuthError(error)) {
           console.error('Authentication error while updating item:', error);
-          await signOut();
+          // await signOut();
+          toast({
+            title: "Erro de Autenticação",
+            description: "Não foi possível atualizar o item.",
+            variant: "destructive"
+          });
           return;
         }
         throw error;
@@ -311,7 +342,12 @@ export function DemandsProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       if (isAuthError(error)) {
         console.error('Authentication error in updateItem:', error);
-        await signOut();
+        // await signOut();
+        toast({
+            title: "Erro de Autenticação",
+            description: "Erro ao tentar atualizar item.",
+            variant: "destructive"
+        });
       } else {
         console.error('Error updating item:', error);
       }
@@ -338,7 +374,12 @@ export function DemandsProvider({ children }: { children: ReactNode }) {
       if (error) {
         if (isAuthError(error)) {
           console.error('Authentication error while updating PDCA:', error);
-          await signOut();
+          // await signOut();
+          toast({
+            title: "Erro de Autenticação",
+            description: "Não foi possível atualizar o PDCA.",
+            variant: "destructive"
+          });
           return;
         }
         throw error;
@@ -359,7 +400,12 @@ export function DemandsProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       if (isAuthError(error)) {
         console.error('Authentication error in updateItemPdca:', error);
-        await signOut();
+        // await signOut();
+        toast({
+            title: "Erro de Autenticação",
+            description: "Erro ao tentar atualizar PDCA.",
+            variant: "destructive"
+        });
       } else {
         console.error('Erro ao atualizar PDCA:', error);
       }
@@ -401,7 +447,12 @@ export function DemandsProvider({ children }: { children: ReactNode }) {
       if (error) {
         if (isAuthError(error)) {
           console.error('Authentication error while deleting item:', error);
-          await signOut();
+          // await signOut();
+          toast({
+            title: "Erro de Autenticação",
+            description: "Não foi possível deletar o item.",
+            variant: "destructive"
+          });
           return;
         }
         throw error;
@@ -411,7 +462,12 @@ export function DemandsProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       if (isAuthError(error)) {
         console.error('Authentication error in deleteItem:', error);
-        await signOut();
+        // await signOut();
+        toast({
+            title: "Erro de Autenticação",
+            description: "Erro ao tentar deletar item.",
+            variant: "destructive"
+        });
       } else {
         console.error('❌ Erro ao deletar item:', error);
       }
@@ -439,7 +495,12 @@ export function DemandsProvider({ children }: { children: ReactNode }) {
       if (error) {
         if (isAuthError(error)) {
           console.error('Authentication error while adding category:', error);
-          await signOut();
+          // await signOut();
+          toast({
+            title: "Erro de Autenticação",
+            description: "Não foi possível adicionar a categoria.",
+            variant: "destructive"
+          });
           return null;
         }
         throw error;
@@ -452,7 +513,12 @@ export function DemandsProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       if (isAuthError(error)) {
         console.error('Authentication error in addCategory:', error);
-        await signOut();
+        // await signOut();
+        toast({
+            title: "Erro de Autenticação",
+            description: "Erro ao tentar adicionar categoria.",
+            variant: "destructive"
+        });
         return null;
       }
       console.error('Erro ao adicionar categoria:', error);
@@ -477,7 +543,12 @@ export function DemandsProvider({ children }: { children: ReactNode }) {
       if (error) {
         if (isAuthError(error)) {
           console.error('Authentication error while deleting category:', error);
-          await signOut();
+          // await signOut();
+          toast({
+            title: "Erro de Autenticação",
+            description: "Não foi possível deletar a categoria.",
+            variant: "destructive"
+          });
           return;
         }
         throw error;
@@ -490,7 +561,12 @@ export function DemandsProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       if (isAuthError(error)) {
         console.error('Authentication error in deleteCategory:', error);
-        await signOut();
+        // await signOut();
+        toast({
+            title: "Erro de Autenticação",
+            description: "Erro ao tentar deletar categoria.",
+            variant: "destructive"
+        });
       } else {
         console.error('Erro ao deletar categoria:', error);
       }
@@ -546,12 +622,10 @@ export function DemandsProvider({ children }: { children: ReactNode }) {
     }
   }, [user, calculateScore, signOut]);
 
-  // Carregar dados quando o usuário estiver disponível
+  // Carregar dados iniciais
   useEffect(() => {
-    if (user) {
-      loadData();
-    }
-  }, [user, loadData, signOut]);
+    loadData();
+  }, [loadData]);
 
   // Recalcular scores periodicamente
   useEffect(() => {

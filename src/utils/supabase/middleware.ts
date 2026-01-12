@@ -33,12 +33,22 @@ export async function updateSession(request: NextRequest) {
 
   const {
     data: { user },
+    error
   } = await supabase.auth.getUser()
+
+  if (error) {
+    // Log auth error for debugging (except simple 'Auth session missing')
+    if (!error.message.includes('Auth session missing')) {
+      console.log('Middleware auth error:', error.message)
+    }
+  }
 
   if (
     !user &&
     !request.nextUrl.pathname.startsWith('/login') &&
-    !request.nextUrl.pathname.startsWith('/auth')
+    !request.nextUrl.pathname.startsWith('/auth') &&
+    !request.nextUrl.pathname.startsWith('/demonstracao') &&
+    request.nextUrl.pathname !== '/'
   ) {
     // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone()
