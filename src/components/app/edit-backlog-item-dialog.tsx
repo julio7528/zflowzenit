@@ -24,6 +24,7 @@ import { Separator } from '../ui/separator';
 import { Slider } from '../ui/slider';
 import { Textarea } from '../ui/textarea';
 import { PDCADialog } from './pdca-dialog';
+import { GRAVITY_LABELS, GRAVITY_DESCRIPTIONS, URGENCY_LABELS, URGENCY_DESCRIPTIONS, TENDENCY_LABELS, TENDENCY_DESCRIPTIONS } from '@/lib/gut-constants';
 import { useAuth } from '@/hooks/use-auth';
 import { useSupabaseDemands } from '@/hooks/use-supabase-demands';
 import { updateCalendarEvent } from '@/app/actions/update-calendar-event';
@@ -39,91 +40,12 @@ import {
 type EditBacklogItemDialogProps = {
   item: BacklogItem;
   onUpdateItem: (item: BacklogItem) => void;
+  trigger?: React.ReactNode;
 };
 
-// Rótulos e comentários GUT (1..10)
-const GRAVITY_LABELS = [
-  '',
-  'Nenhuma gravidade',
-  'Muito baixa',
-  'Baixa',
-  'Moderada',
-  'Relevante',
-  'Alta',
-  'Muito alta',
-  'Crítica',
-  'Muito crítica',
-  'Extremamente crítica'
-];
-const GRAVITY_DESCRIPTIONS = [
-  '',
-  'Não causa impacto perceptível.',
-  'Impacto mínimo e isolado.',
-  'Pequeno prejuízo local, fácil de corrigir.',
-  'Afeta resultados pontuais, mas controláveis.',
-  'Prejuízo financeiro ou operacional considerável.',
-  'Afeta mais de um processo ou equipe.',
-  'Pode interromper parcialmente atividades importantes.',
-  'Compromete metas e resultados significativos.',
-  'Causa perdas severas, financeiras ou de imagem.',
-  'Ameaça a sobrevivência da operação ou negócio.'
-];
 
-const URGENCY_LABELS = [
-  '',
-  'Pode esperar',
-  'Muito baixa',
-  'Baixa',
-  'Moderada',
-  'Relevante',
-  'Alta',
-  'Muito alta',
-  'Crítica',
-  'Muito crítica',
-  'Extremamente crítica'
-];
-const URGENCY_DESCRIPTIONS = [
-  '',
-  'Pode ser resolvido a longo prazo, sem impacto.',
-  'Pode ser tratado eventualmente.',
-  'Deve ser observado em breve.',
-  'Precisa de solução no médio prazo.',
-  'Requer ação em semanas.',
-  'Necessário agir em poucos dias.',
-  'Demanda resposta imediata nesta semana.',
-  'Exige ação nas próximas 24 horas.',
-  'Ação necessária nas próximas horas.',
-  'Requer ação imediata — não pode esperar.'
-];
 
-const TENDENCY_LABELS = [
-  '',
-  'Estável',
-  'Muito baixa',
-  'Baixa',
-  'Moderada',
-  'Relevante',
-  'Alta',
-  'Muito alta',
-  'Crítica',
-  'Muito crítica',
-  'Extremamente crítica'
-];
-const TENDENCY_DESCRIPTIONS = [
-  '',
-  'Não apresenta sinais de piora.',
-  'Pode se agravar apenas a longo prazo.',
-  'Leve risco de piora no futuro distante.',
-  'Tende a piorar lentamente.',
-  'Mostra sinais de crescimento gradual.',
-  'Deve piorar perceptivelmente a médio prazo.',
-  'Piora rapidamente em semanas.',
-  'Piora em questão de dias.',
-  'Pode sair de controle em horas.',
-  'Já está agravando e exige ação imediata.'
-];
-
-export function EditBacklogItemDialog({ item, onUpdateItem }: EditBacklogItemDialogProps) {
+export function EditBacklogItemDialog({ item, onUpdateItem, trigger }: EditBacklogItemDialogProps) {
   const [open, setOpen] = useState(false);
   const [activity, setActivity] = useState(item.activity);
   const [details, setDetails] = useState(item.details || '');
@@ -141,6 +63,23 @@ export function EditBacklogItemDialog({ item, onUpdateItem }: EditBacklogItemDia
   const { user, session } = useAuth();
   const { categories } = useSupabaseDemands();
   const { toast } = useToast();
+
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen);
+    if (newOpen) {
+        setActivity(item.activity);
+        setDetails(item.details || '');
+        setDeadline(item.deadline ? new Date(item.deadline) : null);
+        setStartDate(item.startDate ? new Date(item.startDate) : null);
+        setGravity(item.gravity);
+        setUrgency(item.urgency);
+        setTendency(item.tendency);
+        setCategoryId(item.categoryId || null);
+        setCategoryType(item.category);
+        setStartTime(item.startDate ? format(item.startDate, 'HH:mm') : '');
+        setDeadlineTime(item.deadline ? format(item.deadline, 'HH:mm') : '');
+    }
+  };
 
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>, setTime: (value: string) => void, setDate: React.Dispatch<React.SetStateAction<Date | null>>, currentDate: Date | null) => {
     let value = e.target.value.replace(/[^0-9]/g, '');
@@ -256,12 +195,14 @@ export function EditBacklogItemDialog({ item, onUpdateItem }: EditBacklogItemDia
   const isValidDateRange = (!startDate || !deadline) || (startDate <= deadline);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0">
-          <Edit className="h-4 w-4" />
-          <span className="sr-only">Editar Item</span>
-        </Button>
+        {trigger ? trigger : (
+          <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0">
+            <Edit className="h-4 w-4" />
+            <span className="sr-only">Editar Item</span>
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
         <DialogHeader>

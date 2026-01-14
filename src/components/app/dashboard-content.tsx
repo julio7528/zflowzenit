@@ -321,11 +321,15 @@ export function DashboardContent() {
                             {item.details || 'Sem detalhes'}
                           </p>
                         </div>
-                        <Button asChild size="icon" variant="ghost" className="h-6 w-6">
-                          <Link href={`/edit/${item.id}`}>
-                            <ExternalLink className="h-3 w-3 text-slate-400" />
-                          </Link>
-                        </Button>
+                        <EditBacklogItemDialog 
+                            item={item} 
+                            onUpdateItem={updateItem}
+                            trigger={
+                                <Button size="icon" variant="ghost" className="h-6 w-6">
+                                    <ExternalLink className="h-3 w-3 text-slate-400" />
+                                </Button>
+                            }
+                        />
                       </div>
                     ))
                   ) : (

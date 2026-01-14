@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useLayoutEffect, useRef } from 'react';
-import type { BacklogItem, Category } from '@/lib/types';
+import { scheduleOnCalendar } from '@/app/actions/calendar';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -14,15 +14,17 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PlusCircle, Calendar as CalendarIcon, Clock } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { Calendar } from '../ui/calendar';
+import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
+import { GRAVITY_DESCRIPTIONS, GRAVITY_LABELS, TENDENCY_DESCRIPTIONS, TENDENCY_LABELS, URGENCY_DESCRIPTIONS, URGENCY_LABELS } from '@/lib/gut-constants';
+import type { BacklogItem, Category } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Slider } from '../ui/slider';
-
-import { Textarea } from '../ui/textarea';
+import { Calendar as CalendarIcon, Clock, PlusCircle, Trash2 } from 'lucide-react';
+import { useLayoutEffect, useRef, useState } from 'react';
+import { Calendar } from '../ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import {
   Select,
   SelectContent,
@@ -30,13 +32,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../ui/select';
-import { Trash2 } from 'lucide-react';
-
-import { Checkbox } from '@/components/ui/checkbox';
-import { scheduleOnCalendar } from '@/app/actions/calendar';
-import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/use-auth';
-
+import { Slider } from '../ui/slider';
+import { Textarea } from '../ui/textarea';
 type NewBacklogItemDialogProps = {
   onAddItem: (item: Omit<BacklogItem, 'id' | 'score' | 'createdAt'>) => void;
   categories: Category[];
@@ -642,16 +639,16 @@ let eventId: string | null = null;
             </DialogHeader>
             <div className="grid gap-4 py-4">
                 <div className="space-y-2">
-                    <Label htmlFor="gravity">Gravidade: {gravity}</Label>
-                    <Slider id="gravity" value={[gravity]} onValueChange={(v) => setGravity(v[0])} max={10} step={1} />
+                    <Label htmlFor="gravity">Gravidade: {gravity} - {GRAVITY_LABELS[gravity]} ({GRAVITY_DESCRIPTIONS[gravity]})</Label>
+                    <Slider id="gravity" value={[gravity]} onValueChange={(v) => setGravity(v[0])} max={10} min={1} step={1} />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="urgency">Urgência: {urgency}</Label>
-                    <Slider id="urgency" value={[urgency]} onValueChange={(v) => setUrgency(v[0])} max={10} step={1} />
+                    <Label htmlFor="urgency">Urgência: {urgency} - {URGENCY_LABELS[urgency]} ({URGENCY_DESCRIPTIONS[urgency]})</Label>
+                    <Slider id="urgency" value={[urgency]} onValueChange={(v) => setUrgency(v[0])} max={10} min={1} step={1} />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="tendency">Tendência: {tendency}</Label>
-                    <Slider id="tendency" value={[tendency]} onValueChange={(v) => setTendency(v[0])} max={10} step={1} />
+                    <Label htmlFor="tendency">Tendência: {tendency} - {TENDENCY_LABELS[tendency]} ({TENDENCY_DESCRIPTIONS[tendency]})</Label>
+                    <Slider id="tendency" value={[tendency]} onValueChange={(v) => setTendency(v[0])} max={10} min={1} step={1} />
                 </div>
             </div>
             <DialogFooter>

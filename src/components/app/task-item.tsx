@@ -1,19 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import type { BacklogItem, Category, KanbanStatus } from '@/lib/types';
-import { Card, CardContent } from '../ui/card';
-import { Badge } from '../ui/badge';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { Button } from '../ui/button';
-import { Label } from '../ui/label';
-import { Slider } from '../ui/slider';
-import { Clock, Flame, TrendingUp, CalendarIcon, Trash2, ArrowRightCircle, Eye, Edit } from 'lucide-react';
-import { PDCADialog } from './pdca-dialog';
-import { format, formatDistanceToNow, isPast } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { PopoverClose } from '@radix-ui/react-popover';
-import { EditBacklogItemDialog } from './edit-backlog-item-dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,8 +18,22 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { GRAVITY_DESCRIPTIONS, GRAVITY_LABELS, TENDENCY_DESCRIPTIONS, TENDENCY_LABELS, URGENCY_DESCRIPTIONS, URGENCY_LABELS } from '@/lib/gut-constants';
+import type { BacklogItem, Category, KanbanStatus } from '@/lib/types';
 import { cn } from '@/lib/utils';
-
+import { PopoverClose } from '@radix-ui/react-popover';
+import { format, formatDistanceToNow, isPast } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { ArrowRightCircle, CalendarIcon, Clock, Eye, Flame, Trash2, TrendingUp } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Badge } from '../ui/badge';
+import { Button } from '../ui/button';
+import { Card, CardContent } from '../ui/card';
+import { Label } from '../ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { Slider } from '../ui/slider';
+import { EditBacklogItemDialog } from './edit-backlog-item-dialog';
+import { PDCADialog } from './pdca-dialog';
 type PageType = 'backlog' | 'reference' | 'follow-up' | 'demands' | 'in-progress';
 
 type TaskItemProps = {
@@ -53,88 +53,6 @@ const statusTranslations: Record<KanbanStatus, string> = {
     blocked: 'Bloqueado',
     done: 'Concluído',
 };
-
-// Rótulos e comentários GUT (1..10)
-const GRAVITY_LABELS = [
-  '',
-  'Nenhuma gravidade',
-  'Muito baixa',
-  'Baixa',
-  'Moderada',
-  'Relevante',
-  'Alta',
-  'Muito alta',
-  'Crítica',
-  'Muito crítica',
-  'Extremamente crítica'
-];
-const GRAVITY_DESCRIPTIONS = [
-  '',
-  'Não causa impacto perceptível.',
-  'Impacto mínimo e isolado.',
-  'Pequeno prejuízo local, fácil de corrigir.',
-  'Afeta resultados pontuais, mas controláveis.',
-  'Prejuízo financeiro ou operacional considerável.',
-  'Afeta mais de um processo ou equipe.',
-  'Pode interromper parcialmente atividades importantes.',
-  'Compromete metas e resultados significativos.',
-  'Causa perdas severas, financeiras ou de imagem.',
-  'Ameaça a sobrevivência da operação ou negócio.'
-];
-
-const URGENCY_LABELS = [
-  '',
-  'Pode esperar',
-  'Muito baixa',
-  'Baixa',
-  'Moderada',
-  'Relevante',
-  'Alta',
-  'Muito alta',
-  'Crítica',
-  'Muito crítica',
-  'Extremamente crítica'
-];
-const URGENCY_DESCRIPTIONS = [
-  '',
-  'Pode ser resolvido a longo prazo, sem impacto.',
-  'Pode ser tratado eventualmente.',
-  'Deve ser observado em breve.',
-  'Precisa de solução no médio prazo.',
-  'Requer ação em semanas.',
-  'Necessário agir em poucos dias.',
-  'Demanda resposta imediata nesta semana.',
-  'Exige ação nas próximas 24 horas.',
-  'Ação necessária nas próximas horas.',
-  'Requer ação imediata — não pode esperar.'
-];
-
-const TENDENCY_LABELS = [
-  '',
-  'Estável',
-  'Muito baixa',
-  'Baixa',
-  'Moderada',
-  'Relevante',
-  'Alta',
-  'Muito alta',
-  'Crítica',
-  'Muito crítica',
-  'Extremamente crítica'
-];
-const TENDENCY_DESCRIPTIONS = [
-  '',
-  'Não apresenta sinais de piora.',
-  'Pode se agravar apenas a longo prazo.',
-  'Leve risco de piora no futuro distante.',
-  'Tende a piorar lentamente.',
-  'Mostra sinais de crescimento gradual.',
-  'Deve piorar perceptivelmente a médio prazo.',
-  'Piora rapidamente em semanas.',
-  'Piora em questão de dias.',
-  'Pode sair de controle em horas.',
-  'Já está agravando e exige ação imediata.'
-];
 
 export function TaskItem({ item, onUpdateItem, onDeleteItem, onConvertToTask, category, pageType = 'backlog' }: TaskItemProps) {
   const [localItem, setLocalItem] = useState(item);

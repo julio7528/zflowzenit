@@ -224,102 +224,104 @@ export function CalendarContent() {
               const category = categories.find(c => c.id === item.categoryId);
               
               return (
-                <Card
-                  key={item.id}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    router.push(`/edit/${item.id}`);
-                  }}
-                  className={cn(
-                    'shadow-sm hover:shadow-md transition-all duration-200 group relative cursor-pointer border bg-card rounded-xl overflow-hidden flex flex-col',
-                    isCompleted ? 'border-green-500/50 bg-green-50/30' : '',
-                    !isCompleted && isOverdue ? 'border-destructive/50 bg-destructive/5' : 'hover:border-border/50',
-                    dayViewMode === 'list' ? 'flex-row min-h-[120px]' : 'min-h-[180px]'
-                  )}
-                >
-                  <div
-                    className={cn(
-                      'absolute top-0 left-0 bottom-0 w-1 md:w-1 md:h-full',
-                      dayViewMode === 'grid' ? 'h-1 w-full top-0 left-0 right-0 bottom-auto' : 'w-1 h-full top-0 left-0 bottom-0',
-                      isCompleted ? 'bg-green-500' : isOverdue ? 'bg-destructive' : getPriorityColor(item.score || 0)
-                    )}
-                  />
-                  <CardContent className={cn(
-                    "p-4 flex-grow flex flex-col",
-                    dayViewMode === 'grid' ? "pt-5" : "pl-6"
-                  )}>
-                    {/* Título com melhor tipografia */}
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-foreground text-base leading-tight mb-1 pr-2 line-clamp-2">
-                          {item.activity}
-                        </h3>
-                        {item.deadline && (
-                          <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                            <CalendarIcon className="h-3 w-3" />
-                            {new Date(parseDate(item.deadline)).toLocaleDateString('pt-BR', { 
-                              day: '2-digit', 
-                              month: 'short' 
-                            })}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {/* Badges com design idêntico ao Kanban */}
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      <div 
+                <EditBacklogItemDialog 
+                    key={item.id}
+                    item={item} 
+                    onUpdateItem={updateItem}
+                    trigger={
+                        <Card
                         className={cn(
-                          "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm",
-                          getCategoryColor(item.category), 
-                          "text-white"
+                            'shadow-sm hover:shadow-md transition-all duration-200 group relative cursor-pointer border bg-card rounded-xl overflow-hidden flex flex-col',
+                            isCompleted ? 'border-green-500/50 bg-green-50/30' : '',
+                            !isCompleted && isOverdue ? 'border-destructive/50 bg-destructive/5' : 'hover:border-border/50',
+                            dayViewMode === 'list' ? 'flex-row min-h-[120px]' : 'min-h-[180px]'
                         )}
-                      >
-                        {item.category === 'project' && <Briefcase className="h-3 w-3" />}
-                        {item.category === 'project' ? 'Projeto' : item.category === 'task' ? 'Tarefa' : item.category}
-                      </div>
-                      {category && (
-                        <div 
-                          className={cn(
-                            "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm",
-                            getContrastColor(category.color)
-                          )}
-                          style={{ backgroundColor: category.color }}
                         >
-                          <div className="w-1.5 h-1.5 rounded-full bg-current opacity-70" />
-                          {category.name}
-                        </div>
-                      )}
-                    </div>
-                    
-                    {/* Descrição se houver */}
-                    {item.details && dayViewMode === 'grid' && (
-                      <div className="mb-4 flex-grow">
-                        <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                          {item.details}
-                        </p>
-                      </div>
-                    )}
-                    
-                    {/* Footer com melhor separação visual */}
-                    <div className="mt-auto pt-3 border-t border-border/40">
-                      <div className="flex items-center justify-between gap-2">
-                        {/* Score com design melhorado */}
-                        <div className="flex items-center gap-2">
-                          <div 
+                        <div
                             className={cn(
-                              "inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg text-white shadow-sm",
-                              getPriorityColor(item.score || 0)
+                            'absolute top-0 left-0 bottom-0 w-1 md:w-1 md:h-full',
+                            dayViewMode === 'grid' ? 'h-1 w-full top-0 left-0 right-0 bottom-auto' : 'w-1 h-full top-0 left-0 bottom-0',
+                            isCompleted ? 'bg-green-500' : isOverdue ? 'bg-destructive' : getPriorityColor(item.score || 0)
                             )}
-                          >
-                            <span className="text-[10px] opacity-80">GUT</span>
-                            <span>{Math.round(item.score || 0)}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                        />
+                        <CardContent className={cn(
+                            "p-4 flex-grow flex flex-col",
+                            dayViewMode === 'grid' ? "pt-5" : "pl-6"
+                        )}>
+                            {/* Título com melhor tipografia */}
+                            <div className="flex items-start justify-between mb-2">
+                            <div className="flex-1 min-w-0">
+                                <h3 className="font-semibold text-foreground text-base leading-tight mb-1 pr-2 line-clamp-2">
+                                {item.activity}
+                                </h3>
+                                {item.deadline && (
+                                <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                                    <CalendarIcon className="h-3 w-3" />
+                                    {new Date(parseDate(item.deadline)).toLocaleDateString('pt-BR', { 
+                                    day: '2-digit', 
+                                    month: 'short' 
+                                    })}
+                                </p>
+                                )}
+                            </div>
+                            </div>
+                            
+                            {/* Badges com design idêntico ao Kanban */}
+                            <div className="flex flex-wrap gap-2 mb-3">
+                            <div 
+                                className={cn(
+                                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm",
+                                getCategoryColor(item.category), 
+                                "text-white"
+                                )}
+                            >
+                                {item.category === 'project' && <Briefcase className="h-3 w-3" />}
+                                {item.category === 'project' ? 'Projeto' : item.category === 'task' ? 'Tarefa' : item.category}
+                            </div>
+                            {category && (
+                                <div 
+                                className={cn(
+                                    "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm",
+                                    getContrastColor(category.color)
+                                )}
+                                style={{ backgroundColor: category.color }}
+                                >
+                                <div className="w-1.5 h-1.5 rounded-full bg-current opacity-70" />
+                                {category.name}
+                                </div>
+                            )}
+                            </div>
+                            
+                            {/* Descrição se houver */}
+                            {item.details && dayViewMode === 'grid' && (
+                            <div className="mb-4 flex-grow">
+                                <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                                {item.details}
+                                </p>
+                            </div>
+                            )}
+                            
+                            {/* Footer com melhor separação visual */}
+                            <div className="mt-auto pt-3 border-t border-border/40">
+                            <div className="flex items-center justify-between gap-2">
+                                {/* Score com design melhorado */}
+                                <div className="flex items-center gap-2">
+                                <div 
+                                    className={cn(
+                                    "inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg text-white shadow-sm",
+                                    getPriorityColor(item.score || 0)
+                                    )}
+                                >
+                                    <span className="text-[10px] opacity-80">GUT</span>
+                                    <span>{Math.round(item.score || 0)}</span>
+                                </div>
+                                </div>
+                            </div>
+                            </div>
+                        </CardContent>
+                        </Card>
+                    }
+                />
               );
             })
           ) : (
@@ -380,39 +382,41 @@ export function CalendarContent() {
                     const category = categories.find(c => c.id === item.categoryId);
                     
                     return (
-                       <div
-                          key={item.id}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            router.push(`/edit/${item.id}`);
-                          }}
-                         className={cn(
-                           'relative rounded-lg p-2 text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-md cursor-pointer border overflow-hidden',
-                           isCompleted ? 'border-green-500/50 bg-green-50/30' : '',
-                           !isCompleted && isOverdue ? 'border-destructive/50 bg-destructive/5' : 'border-border/50 bg-card'
-                         )}
-                         title={item.activity}
-                       >
-                        <div
-                          className={cn(
-                            'absolute top-0 left-0 right-0 h-0.5',
-                            isCompleted ? 'bg-green-500' : isOverdue ? 'bg-destructive' : getPriorityColor(item.score || 0)
-                          )}
+                       <EditBacklogItemDialog 
+                            key={item.id}
+                            item={item} 
+                            onUpdateItem={updateItem}
+                            trigger={
+                                <div
+                                className={cn(
+                                'relative rounded-lg p-2 text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-md cursor-pointer border overflow-hidden',
+                                isCompleted ? 'border-green-500/50 bg-green-50/30' : '',
+                                !isCompleted && isOverdue ? 'border-destructive/50 bg-destructive/5' : 'border-border/50 bg-card'
+                                )}
+                                title={item.activity}
+                            >
+                                <div
+                                className={cn(
+                                    'absolute top-0 left-0 right-0 h-0.5',
+                                    isCompleted ? 'bg-green-500' : isOverdue ? 'bg-destructive' : getPriorityColor(item.score || 0)
+                                )}
+                                />
+                                <div className="flex items-center gap-1.5 pt-1">
+                                <div 
+                                    className={cn(
+                                    "inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold shadow-sm",
+                                    "bg-gray-500 dark:bg-gray-800",
+                                    "text-white"
+                                    )}
+                                >
+                                    {item.category === 'project' && <Briefcase className="h-2 w-2" />}
+                                    {item.category === 'project' ? 'Proj' : item.category === 'task' ? 'Task' : item.category?.slice(0, 3)}
+                                </div>
+                                <span className="truncate text-foreground font-medium flex-1">{item.activity}</span>
+                                </div>
+                            </div>
+                            }
                         />
-                        <div className="flex items-center gap-1.5 pt-1">
-                          <div 
-                            className={cn(
-                              "inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold shadow-sm",
-                              "bg-gray-500 dark:bg-gray-800",
-                              "text-white"
-                            )}
-                          >
-                            {item.category === 'project' && <Briefcase className="h-2 w-2" />}
-                            {item.category === 'project' ? 'Proj' : item.category === 'task' ? 'Task' : item.category?.slice(0, 3)}
-                          </div>
-                          <span className="truncate text-foreground font-medium flex-1">{item.activity}</span>
-                        </div>
-                      </div>
                     );
                   })}
                   {dayItems.length > 3 && (
@@ -484,39 +488,44 @@ export function CalendarContent() {
                       const isOverdue = !isCompleted && item.deadline && isPast(parseDate(item.deadline));
                       
                       return (
-                        <div
-                           key={item.id}
-                           onClick={(e) => {
-                             e.stopPropagation();
-                             router.push(`/edit/${item.id}`);
-                           }}
-                           className={cn(
-                             'relative text-xs p-1.5 rounded-lg font-medium truncate cursor-pointer transition-all duration-200 hover:shadow-md border overflow-hidden',
-                             isCompleted ? 'border-green-500/50 bg-green-50/30' : '',
-                             !isCompleted && isOverdue ? 'border-destructive/50 bg-destructive/5' : 'border-border/50 bg-card'
-                           )}
-                           title={item.activity}
-                         >
-                          <div
-                            className={cn(
-                              'absolute top-0 left-0 right-0 h-0.5',
-                              isCompleted ? 'bg-green-500' : isOverdue ? 'bg-destructive' : getPriorityColor(item.score || 0)
-                            )}
-                          />
-                          <div className="flex items-center gap-1 pt-0.5">
-                            <div 
-                              className={cn(
-                                "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-semibold shadow-sm",
-                                getCategoryColor(item.category), 
-                                "text-white"
-                              )}
-                            >
-                              {item.category === 'project' && <Briefcase className="h-1.5 w-1.5" />}
-                              {item.category === 'project' ? 'P' : item.category === 'task' ? 'T' : item.category?.charAt(0)?.toUpperCase()}
-                            </div>
-                            <span className="truncate text-foreground font-medium flex-1">{item.activity}</span>
-                          </div>
-                        </div>
+                        <EditBacklogItemDialog 
+                            key={item.id}
+                            item={item} 
+                            onUpdateItem={updateItem}
+                            trigger={
+                                <div
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                }}
+                                className={cn(
+                                    'relative text-xs p-1.5 rounded-lg font-medium truncate cursor-pointer transition-all duration-200 hover:shadow-md border overflow-hidden',
+                                    isCompleted ? 'border-green-500/50 bg-green-50/30' : '',
+                                    !isCompleted && isOverdue ? 'border-destructive/50 bg-destructive/5' : 'border-border/50 bg-card'
+                                )}
+                                title={item.activity}
+                                >
+                                <div
+                                    className={cn(
+                                    'absolute top-0 left-0 right-0 h-0.5',
+                                    isCompleted ? 'bg-green-500' : isOverdue ? 'bg-destructive' : getPriorityColor(item.score || 0)
+                                    )}
+                                />
+                                <div className="flex items-center gap-1 pt-0.5">
+                                    <div 
+                                    className={cn(
+                                        "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-semibold shadow-sm",
+                                        getCategoryColor(item.category), 
+                                        "text-white"
+                                    )}
+                                    >
+                                    {item.category === 'project' && <Briefcase className="h-1.5 w-1.5" />}
+                                    {item.category === 'project' ? 'P' : item.category === 'task' ? 'T' : item.category?.charAt(0)?.toUpperCase()}
+                                    </div>
+                                    <span className="truncate text-foreground font-medium flex-1">{item.activity}</span>
+                                </div>
+                                </div>
+                            }
+                        />
                       );
                     })}
                     {dayItems.length > 2 && (
